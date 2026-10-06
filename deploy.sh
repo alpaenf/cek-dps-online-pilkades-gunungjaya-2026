@@ -87,7 +87,11 @@ fi
 # ------------------------------------------------------------------------------
 echo "🚧 [2/8] Mengaktifkan Maintenance Mode sementara..."
 if $PHP_BIN artisan --version >/dev/null 2>&1; then
-    $PHP_BIN artisan down --render="errors::503" --secret="p2kdgunungjaya2026" || true
+    if [ -n "${MAINTENANCE_SECRET:-}" ]; then
+        $PHP_BIN artisan down --render="errors::503" --secret="$MAINTENANCE_SECRET" || true
+    else
+        $PHP_BIN artisan down --render="errors::503" || true
+    fi
 fi
 
 # ------------------------------------------------------------------------------
