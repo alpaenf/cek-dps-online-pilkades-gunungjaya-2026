@@ -461,19 +461,21 @@ export default function AdminDashboard({
         </div>
 
         {/* Tab Switcher: DPS vs TPS */}
-        <div className="flex items-center gap-3 border-b-2 border-slate-200 pb-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 border-b-2 border-slate-200 pb-3">
           <button
             type="button"
             onClick={() => setActiveTab('dps')}
-            className={`px-5 py-3 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+            className={`w-full px-4 sm:px-5 py-3 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-between sm:justify-center gap-2 cursor-pointer ${
               activeTab === 'dps'
                 ? 'bg-[#58CC02] text-white border-b-4 border-[#46A302] shadow-sm'
                 : 'bg-white hover:bg-slate-100 text-slate-600 border-2 border-slate-200'
             }`}
           >
-            <Database className="w-4 h-4" />
-            <span>Kelola Daftar Pemilih (DPS)</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black ${
+            <span className="flex items-center gap-2">
+              <Database className="w-4 h-4 shrink-0" />
+              <span>Daftar Pemilih (DPS)</span>
+            </span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black shrink-0 ${
               activeTab === 'dps' ? 'bg-white text-[#58CC02]' : 'bg-slate-100 text-slate-600'
             }`}>
               {stats.totalDps.toLocaleString('id-ID')}
@@ -483,15 +485,17 @@ export default function AdminDashboard({
           <button
             type="button"
             onClick={() => setActiveTab('tps')}
-            className={`px-5 py-3 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+            className={`w-full px-4 sm:px-5 py-3 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-between sm:justify-center gap-2 cursor-pointer ${
               activeTab === 'tps'
                 ? 'bg-[#1CB0F6] text-white border-b-4 border-[#1899D6] shadow-sm'
                 : 'bg-white hover:bg-slate-100 text-slate-600 border-2 border-slate-200'
             }`}
           >
-            <MapPin className="w-4 h-4" />
-            <span>Kelola Lokasi TPS</span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black ${
+            <span className="flex items-center gap-2">
+              <MapPin className="w-4 h-4 shrink-0" />
+              <span>Lokasi TPS</span>
+            </span>
+            <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black shrink-0 ${
               activeTab === 'tps' ? 'bg-white text-[#1CB0F6]' : 'bg-slate-100 text-slate-600'
             }`}>
               {stats.totalTps} TPS
@@ -582,8 +586,8 @@ export default function AdminDashboard({
               </div>
             </div>
 
-            {/* Voters Table */}
-            <div className="overflow-x-auto rounded-2xl border-2 border-slate-200">
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto rounded-2xl border-2 border-slate-200">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-50 text-slate-600 border-b-2 border-slate-200 uppercase text-[11px] font-black">
@@ -668,6 +672,78 @@ export default function AdminDashboard({
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card Grid View */}
+            <div className="md:hidden space-y-3">
+              {voters.data.length === 0 ? (
+                <div className="p-6 text-center text-slate-400 font-bold bg-slate-50 rounded-2xl border-2 border-slate-200">
+                  Tidak ada data pemilih yang sesuai filter.
+                </div>
+              ) : (
+                voters.data.map((voter) => (
+                  <div
+                    key={voter.id}
+                    className="p-4 bg-slate-50 border-2 border-b-4 border-slate-200 rounded-2xl space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="font-black text-slate-900 text-sm block">
+                          {voter.nama}
+                        </span>
+                        <span className="text-xs font-black text-[#1CB0F6] tracking-wider block">
+                          {voter.nik}
+                        </span>
+                      </div>
+                      <span className={`px-2.5 py-1 rounded-xl text-xs font-black ${
+                        voter.jenis_kelamin === 'L'
+                          ? 'bg-[#DDF4FF] text-[#1899D6] border border-[#1CB0F6]/30'
+                          : 'bg-[#FFEACC] text-[#E07700] border border-[#FF9600]/30'
+                      }`}>
+                        {voter.jenis_kelamin === 'L' ? 'Laki-Laki' : 'Perempuan'}
+                      </span>
+                    </div>
+
+                    <div className="text-xs space-y-1 text-slate-600 font-medium pt-2 border-t border-slate-200">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Dusun / RT-RW:</span>
+                        <span className="font-bold text-slate-800">{voter.dusun || '-'} (RT {voter.rt || '-'}/RW {voter.rw || '-'})</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Lokasi TPS:</span>
+                        <span className="px-2 py-0.5 bg-[#1CB0F6] text-white rounded-lg font-black text-[11px]">
+                          {voter.tps?.nomor_tps || 'TPS Belum Ditentukan'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                      <span className="px-2 py-0.5 rounded-lg bg-[#E5F9D2] text-[#46A302] border border-[#58CC02]/30 text-[10px] font-black uppercase">
+                        {voter.status || 'DPS'}
+                      </span>
+
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditVoter(voter)}
+                          className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeletingVoter(voter)}
+                          className="px-3 py-1.5 rounded-xl bg-[#FFE5E5] text-[#EA2B2B] font-bold text-xs flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Hapus</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Pagination */}

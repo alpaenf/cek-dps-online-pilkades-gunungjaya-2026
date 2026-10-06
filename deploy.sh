@@ -2,7 +2,8 @@
 
 # ==============================================================================
 # Script Otomatis Deployment - Cek DPS Online Pilkades Gunungjaya 2026
-# Framework: Laravel 12 + Inertia React (Vite)
+# Repository : https://github.com/alpaenf/cek-dps-online-pilkades-gunungjaya-2026
+# Framework  : Laravel 12 + Inertia React (Vite)
 # ==============================================================================
 # Cara Penggunaan:
 #   chmod +x deploy.sh
@@ -18,8 +19,12 @@
 set -e
 
 # ------------------------------------------------------------------------------
-# 1. Konfigurasi Path & Environment
+# 1. Konfigurasi Path, Repository & Environment
 # ------------------------------------------------------------------------------
+# Repository GitHub Resmi
+REPO_URL="https://github.com/alpaenf/cek-dps-online-pilkades-gunungjaya-2026.git"
+BRANCH="main"
+
 # Nama folder project otomatis diambil dari nama folder aktif saat ini
 PROJECT_DIR="$(basename "$PWD")"
 
@@ -88,11 +93,18 @@ fi
 # ------------------------------------------------------------------------------
 # 4. Tarik Pembaruan dari Git
 # ------------------------------------------------------------------------------
-echo "📥 [3/8] Mengambil kode terbaru dari Git (git pull)..."
+echo "📥 [3/8] Mengambil kode terbaru dari Git ($REPO_URL)..."
 if [ -d ".git" ]; then
-    git pull origin main || echo "   ⚠️ Peringatan: git pull gagal atau ada perubahan lokal. Melanjutkan dengan file saat ini."
+    # Pastikan remote origin mengarah ke repository yang sesuai
+    git remote set-url origin "$REPO_URL" 2>/dev/null || true
+    git fetch origin "$BRANCH" 2>/dev/null || true
+    git pull origin "$BRANCH" || echo "   ⚠️ Peringatan: git pull gagal atau ada perubahan lokal. Melanjutkan dengan file saat ini."
 else
-    echo "   ℹ️ Repository .git tidak terdeteksi. Melewati git pull."
+    echo "   ℹ️ Inisialisasi Git remote ke $REPO_URL..."
+    git init
+    git remote add origin "$REPO_URL" 2>/dev/null || true
+    git fetch origin "$BRANCH" 2>/dev/null || true
+    git pull origin "$BRANCH" 2>/dev/null || true
 fi
 
 # ------------------------------------------------------------------------------
