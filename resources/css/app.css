@@ -1,0 +1,194 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Nunito', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-variant-numeric: normal;
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background-color: #F7F9FA;
+    color: #374151;
+    font-variant-numeric: normal;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+}
+
+@layer components {
+  /* Duolingo Signature Tactile 3D Buttons */
+  .duo-btn-primary {
+    @apply bg-[#58CC02] hover:bg-[#50b802] text-white font-extrabold uppercase tracking-wide border-b-4 border-[#46A302] active:border-b-0 active:translate-y-1 transition-all duration-100 rounded-2xl shadow-sm inline-flex items-center justify-center gap-2;
+  }
+
+  .duo-btn-blue {
+    @apply bg-[#1CB0F6] hover:bg-[#189ddb] text-white font-extrabold uppercase tracking-wide border-b-4 border-[#1899D6] active:border-b-0 active:translate-y-1 transition-all duration-100 rounded-2xl shadow-sm inline-flex items-center justify-center gap-2;
+  }
+
+  .duo-btn-yellow {
+    @apply bg-[#FFC800] hover:bg-[#e6b400] text-amber-950 font-extrabold uppercase tracking-wide border-b-4 border-[#E59B00] active:border-b-0 active:translate-y-1 transition-all duration-100 rounded-2xl shadow-sm inline-flex items-center justify-center gap-2;
+  }
+
+  .duo-btn-white {
+    @apply bg-white hover:bg-slate-50 text-slate-700 font-extrabold uppercase tracking-wide border-2 border-b-4 border-slate-200 hover:border-slate-300 active:border-b-2 active:translate-y-0.5 transition-all duration-100 rounded-2xl inline-flex items-center justify-center gap-2;
+  }
+
+  .duo-btn-danger {
+    @apply bg-[#FF4B4B] hover:bg-[#e03d3d] text-white font-extrabold uppercase tracking-wide border-b-4 border-[#EA2B2B] active:border-b-0 active:translate-y-1 transition-all duration-100 rounded-2xl shadow-sm inline-flex items-center justify-center gap-2;
+  }
+
+  /* Duolingo Clean 3D Card */
+  .duo-card {
+    @apply bg-white border-2 border-b-4 border-slate-200 rounded-3xl transition-all duration-200;
+  }
+
+  .duo-card-interactive {
+    @apply bg-white border-2 border-b-4 border-slate-200 hover:border-[#1CB0F6] hover:border-b-[#1899D6] rounded-3xl transition-all duration-150 cursor-pointer;
+  }
+
+  /* Duolingo Pill Badge */
+  .duo-badge {
+    @apply px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider inline-flex items-center gap-1.5;
+  }
+
+  /* Duolingo Mascot Animations */
+  .duo-mascot-hop {
+    animation: duoHop 1.15s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
+    transform-origin: bottom center;
+  }
+
+  .duo-mascot-shadow {
+    animation: duoShadowPulse 1.15s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
+    transform-origin: center center;
+  }
+
+  .duo-stripes {
+    background-image: linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.35) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.35) 50%,
+      rgba(255, 255, 255, 0.35) 75%,
+      transparent 75%,
+      transparent
+    );
+    background-size: 28px 28px;
+    animation: duoStripeMove 0.8s linear infinite;
+  }
+
+  .duo-float {
+    animation: duoFloat 2.2s ease-in-out infinite;
+  }
+
+  .duo-pop-in {
+    animation: duoPopIn 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+}
+
+@keyframes duoPopIn {
+  0% {
+    transform: scale(0.65);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes duoHop {
+  0%, 100% {
+    transform: translateY(0) scale(1, 1) rotate(0deg);
+  }
+  15% {
+    transform: translateY(3px) scale(1.08, 0.90) rotate(0deg);
+  }
+  45% {
+    transform: translateY(-24px) scale(0.94, 1.08) rotate(-3deg);
+  }
+  60% {
+    transform: translateY(-26px) scale(0.96, 1.04) rotate(2deg);
+  }
+  80% {
+    transform: translateY(0) scale(1.08, 0.92) rotate(0deg);
+  }
+  90% {
+    transform: translateY(-4px) scale(0.98, 1.02) rotate(0deg);
+  }
+}
+
+@keyframes duoShadowPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  15% {
+    transform: scale(1.18);
+    opacity: 0.65;
+  }
+  45%, 60% {
+    transform: scale(0.5);
+    opacity: 0.2;
+  }
+  80% {
+    transform: scale(1.12);
+    opacity: 0.6;
+  }
+  90% {
+    transform: scale(0.95);
+    opacity: 0.45;
+  }
+}
+
+@keyframes duoStripeMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 28px 0;
+  }
+}
+
+@keyframes duoFloat {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(10deg);
+  }
+}
+
+@media print {
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-card {
+    box-shadow: none !important;
+    border: 2px solid #333 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 24px !important;
+  }
+}

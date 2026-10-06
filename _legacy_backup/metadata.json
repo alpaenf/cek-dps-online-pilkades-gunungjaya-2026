@@ -1,0 +1,6 @@
+{
+  "name": "CEK DPT ONLINE Pilkades Gunungjaya 2026",
+  "description": "Portal Resmi Pengecekan Daftar Pemilih Tetap (DPT) Pemilihan Kepala Desa Gunungjaya Kecamatan Belik Kabupaten Pemalang Tahun 2026.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
