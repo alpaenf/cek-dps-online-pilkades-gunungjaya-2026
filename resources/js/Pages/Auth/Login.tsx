@@ -10,9 +10,9 @@ interface LoginProps {
 
 export default function Login({ status }: LoginProps) {
   const { data, setData, post, processing, errors, reset } = useForm({
-    email: 'admin@gunungjaya.desa.id',
+    email: '',
     password: '',
-    remember: true,
+    remember: false,
   });
 
   const submit = (e: React.FormEvent) => {
@@ -201,10 +201,10 @@ export default function Login({ status }: LoginProps) {
                 </div>
               </form>
 
-              {/* Quick Info Box */}
+              {/* Security Notice */}
               <div className="pt-2 border-t border-slate-100 text-center">
-                <p className="text-[11px] font-semibold text-slate-400">
-                  Akun bawaan: <span className="text-slate-700 font-bold">admin@gunungjaya.desa.id</span> | Sandi: <span className="text-slate-700 font-bold">password</span>
+                <p className="text-[11px] font-medium text-slate-400">
+                  Panel Khusus Panitia Pemilihan Kepala Desa (P2KD) Gunungjaya 2026.
                 </p>
               </div>
             </div>

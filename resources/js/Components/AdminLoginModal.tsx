@@ -44,7 +44,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     setErrorMessage(null);
 
     const entered = pinInput.trim();
-    if (entered === currentPin || entered === '123456' || entered === 'admin2026') {
+    if (currentPin && entered === currentPin) {
       setSuccessMessage('PIN Benar! Selamat datang di Panel Administrator.');
       setPinInput('');
       onLoginSuccess();

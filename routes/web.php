@@ -12,12 +12,20 @@ use Inertia\Inertia;
 
 // Halaman Publik Cek DPS Pilkades Gunungjaya 2026
 Route::get('/', [DpsSearchController::class, 'index'])->name('home');
-Route::post('/api/check-dps', [DpsSearchController::class, 'checkDps'])->name('dps.check');
-Route::post('/api/lapor', [DpsSearchController::class, 'submitReport'])->name('dps.lapor');
+
+// Endpoint API Pencarian NIK dengan Rate Limiting Ketat (Anti-Scraping / Anti-Brute Force)
+Route::post('/api/check-dps', [DpsSearchController::class, 'checkDps'])
+    ->middleware('throttle:30,1')
+    ->name('dps.check');
+
+// Endpoint Pengaduan / Sanggahan Warga dengan Rate Limiting (Anti-Spam / Anti-DoS)
+Route::post('/api/lapor', [DpsSearchController::class, 'submitReport'])
+    ->middleware('throttle:5,1')
+    ->name('dps.lapor');
 
 // Akses /admin dan /admin/login:
 Route::get('/admin/login', [AuthenticatedSessionController::class, 'create'])->name('admin.login');
-Route::post('/admin/login', [AuthenticatedSessionController::class, 'store']);
+Route::post('/admin/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:5,1');
 
 Route::get('/admin', function () {
     if (auth()->check()) {

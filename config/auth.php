@@ -66,11 +66,6 @@ return [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
         ],
-
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
     ],
 
     /*
@@ -113,5 +108,18 @@ return [
     */
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Allow Public User Registration
+    |--------------------------------------------------------------------------
+    |
+    | For security in an official election application, public registration
+    | is disabled by default. Only designated committee members seeded or
+    | created by an administrator should possess accounts.
+    |
+    */
+
+    'allow_registration' => env('ALLOW_REGISTRATION', false),
 
 ];

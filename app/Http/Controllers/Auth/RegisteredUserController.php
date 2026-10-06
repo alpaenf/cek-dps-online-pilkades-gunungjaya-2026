@@ -21,6 +21,10 @@ class RegisteredUserController extends Controller
      */
     public function create(): Response
     {
+        if (! config('auth.allow_registration', false)) {
+            abort(403, 'Pendaftaran akun mandiri dinonaktifkan demi keamanan sistem Pilkades.');
+        }
+
         return Inertia::render('Auth/Register');
     }
 
@@ -31,6 +35,10 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        if (! config('auth.allow_registration', false)) {
+            abort(403, 'Pendaftaran akun mandiri dinonaktifkan demi keamanan sistem Pilkades.');
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
@@ -41,6 +49,7 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => 'user',
         ]);
 
         event(new Registered($user));
