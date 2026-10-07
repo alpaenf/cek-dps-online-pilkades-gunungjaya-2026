@@ -37,10 +37,10 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Brand Logo & Title */}
-          <div className="flex items-center gap-3.5">
+          <div className="flex items-center gap-2 sm:gap-3">
             <div
               onClick={isAdmin ? onOpenLogoModal : undefined}
-              className={`relative w-12 h-12 sm:w-14 sm:h-14 shrink-0 flex items-center justify-center ${
+              className={`relative w-8 h-8 sm:w-10 sm:h-10 shrink-0 flex items-center justify-center ${
                 isAdmin ? 'cursor-pointer group' : ''
               }`}
               title={isAdmin ? 'Ganti Logo Pilkades' : 'Logo Desa Gunungjaya'}
@@ -51,8 +51,8 @@ export const Header: React.FC<HeaderProps> = ({
                 className="w-full h-full object-contain transition-transform group-hover:scale-105"
               />
               {isAdmin && (
-                <div className="absolute inset-0 bg-slate-900/60 text-white opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity rounded-xl text-[9px] font-bold backdrop-blur-xs">
-                  <Edit3 className="w-3.5 h-3.5 mb-0.5 text-[#58CC02]" />
+                <div className="absolute inset-0 bg-slate-900/60 text-white opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center transition-opacity rounded-xl text-[8px] font-bold backdrop-blur-xs">
+                  <Edit3 className="w-3 h-3 mb-0.5 text-[#58CC02]" />
                   <span>Ubah</span>
                 </div>
               )}
@@ -62,20 +62,20 @@ export const Header: React.FC<HeaderProps> = ({
               onClick={() => handleNav('cek-dps')}
               className="cursor-pointer"
             >
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#58CC02] bg-[#E5F9D2] px-2.5 py-0.5 rounded-lg border border-[#58CC02]/30">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-[#58CC02] bg-[#E5F9D2] px-1.5 py-0.5 rounded-md border border-[#58CC02]/30 leading-none">
                   Pilkades 2026
                 </span>
                 {isAdmin && (
-                  <span className="text-[10px] font-bold text-[#1CB0F6] bg-[#DDF4FF] px-2 py-0.5 rounded-lg border border-[#1CB0F6]/30">
+                  <span className="text-[7.5px] sm:text-[8.5px] font-bold text-[#1CB0F6] bg-[#DDF4FF] px-1.5 py-0.5 rounded-md border border-[#1CB0F6]/30 leading-none">
                     Mode Admin
                   </span>
                 )}
               </div>
-              <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
+              <h1 className="text-[10px] sm:text-[12px] font-black text-slate-900 tracking-tight leading-tight mt-0.5">
                 PILKADES GUNUNGJAYA 2026
               </h1>
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+              <p className="text-[8px] sm:text-[9.5px] font-bold text-slate-500 uppercase tracking-tight leading-none">
                 Cek DPS Online Desa Gunungjaya
               </p>
             </div>

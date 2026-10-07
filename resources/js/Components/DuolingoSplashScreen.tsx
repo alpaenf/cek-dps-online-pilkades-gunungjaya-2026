@@ -13,49 +13,54 @@ export const DuolingoSplashScreen: React.FC<DuolingoSplashScreenProps> = ({
   desa = 'Gunungjaya',
   onComplete,
 }) => {
-  const [isVisible, setIsVisible] = useState(true);
+  // Hanya tampil sekali per sesi browser agar tidak memperlambat saat refresh
+  const [isVisible, setIsVisible] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !sessionStorage.getItem('pilkades_splash_seen');
+    }
+    return true;
+  });
+
   const [isExiting, setIsExiting] = useState(false);
-  const [progress, setProgress] = useState(15);
+  const [progress, setProgress] = useState(35);
   const [statusText, setStatusText] = useState('Menghubungkan database Pilkades...');
 
   useEffect(() => {
-    // Stage 1: Initial progress
+    if (!isVisible) return;
+
+    // Stage 1: Progress cepat
     const t1 = setTimeout(() => {
-      setProgress(45);
-      setStatusText('Memeriksa kesiapan 5 TPS...');
-    }, 450);
+      setProgress(75);
+      setStatusText('Menyiapkan layanan DPS...');
+    }, 150);
 
-    // Stage 2: Second step
+    // Stage 2: Selesai 100%
     const t2 = setTimeout(() => {
-      setProgress(85);
-      setStatusText('Menyiapkan layanan DPS Gunungjaya...');
-    }, 950);
-
-    // Stage 3: Complete progress
-    const t3 = setTimeout(() => {
       setProgress(100);
       setStatusText('Sistem Siap! Sugeng Rawuh...');
-    }, 1450);
+    }, 380);
 
-    // Stage 4: Trigger exit transition
-    const t4 = setTimeout(() => {
+    // Stage 3: Langsung transisi keluar (Total ~0.65 detik)
+    const t3 = setTimeout(() => {
       handleClose();
-    }, 1900);
+    }, 650);
 
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
-      clearTimeout(t4);
     };
-  }, []);
+  }, [isVisible]);
 
   const handleClose = () => {
+    try {
+      sessionStorage.setItem('pilkades_splash_seen', '1');
+    } catch {}
     setIsExiting(true);
     setTimeout(() => {
       setIsVisible(false);
       if (onComplete) onComplete();
-    }, 450);
+    }, 280);
   };
 
   if (!isVisible) return null;
