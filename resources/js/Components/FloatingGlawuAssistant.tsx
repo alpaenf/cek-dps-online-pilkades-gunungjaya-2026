@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, HelpCircle, ArrowUpRight, CheckCircle2, Calendar, FileText, Phone, MessageCircle } from 'lucide-react';
+import { X, Sparkles, HelpCircle, ArrowUpRight, CheckCircle2, Calendar, FileText, Phone, MessageCircle, Search, MapPin } from 'lucide-react';
 import { DEFAULT_MASCOT_GLAWU, DEFAULT_MASCOT_GLAWU_GUIDE } from '../data/logoPresets';
 import { PilkadesConfig } from '../types/pilkades';
 
@@ -51,8 +51,9 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
                   </span>
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
                 </div>
-                <h4 className="text-base font-black text-white font-serif">
-                  Halo, Aku GLAWU! 👋
+                <h4 className="text-base font-black text-white font-serif flex items-center gap-1.5">
+                  <span>Halo, Aku GLAWU!</span>
+                  <Sparkles className="w-4 h-4 text-amber-400" />
                 </h4>
                 <p className="text-[11px] text-slate-300">
                   Maskot Pilkades Gunungjaya 2026
@@ -88,8 +89,10 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
                 }}
                 className="w-full p-2.5 rounded-xl bg-slate-950/80 hover:bg-slate-850 text-white border border-slate-700/80 hover:border-amber-500/50 flex items-center justify-between text-left transition font-semibold cursor-pointer"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-base">🔍</span>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-lg bg-amber-500/20 flex items-center justify-center shrink-0">
+                    <Search className="w-3.5 h-3.5 text-amber-400" />
+                  </div>
                   <span className="text-amber-300">Cek NIK di DPT Sekarang</span>
                 </div>
                 <ArrowUpRight className="w-4 h-4 text-amber-400" />
@@ -103,8 +106,10 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
                 }}
                 className="w-full p-2.5 rounded-xl bg-slate-950/80 hover:bg-slate-850 text-white border border-slate-700/80 hover:border-emerald-500/50 flex items-center justify-between text-left transition font-semibold cursor-pointer"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-base">📍</span>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                  </div>
                   <span className="text-emerald-300">Lihat Lokasi & Data TPS Desa</span>
                 </div>
                 <ArrowUpRight className="w-4 h-4 text-emerald-400" />
@@ -118,8 +123,10 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
                 }}
                 className="w-full p-2.5 rounded-xl bg-slate-950/80 hover:bg-slate-850 text-white border border-slate-700/80 hover:border-sky-500/50 flex items-center justify-between text-left transition font-semibold cursor-pointer"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-base">🦅</span>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-lg bg-sky-500/20 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-3.5 h-3.5 text-sky-400" />
+                  </div>
                   <span className="text-sky-300">Kenal Lebih Dekat dengan Glawu</span>
                 </div>
                 <ArrowUpRight className="w-4 h-4 text-sky-400" />
@@ -133,8 +140,10 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
                 }}
                 className="w-full p-2.5 rounded-xl bg-slate-950/80 hover:bg-slate-850 text-white border border-slate-700/80 hover:border-purple-500/50 flex items-center justify-between text-left transition font-semibold cursor-pointer"
               >
-                <div className="flex items-center gap-2">
-                  <span className="text-base">📞</span>
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
+                    <Phone className="w-3.5 h-3.5 text-purple-400" />
+                  </div>
                   <span className="text-purple-300">Hubungi Sekretariat Panitia (P2KD)</span>
                 </div>
                 <ArrowUpRight className="w-4 h-4 text-purple-400" />
@@ -143,8 +152,9 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
 
             {/* Quick reminder box */}
             <div className="p-3 bg-slate-950/90 rounded-2xl border border-slate-800 text-slate-300 space-y-1">
-              <span className="font-bold text-amber-300 text-[11px] block font-mono">
-                🗓️ Waktu Pemungutan Suara:
+              <span className="flex items-center gap-1.5 font-bold text-amber-300 text-[11px] font-mono">
+                <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                Waktu Pemungutan Suara:
               </span>
               <p className="font-semibold text-white">
                 {config.tanggal_pemungutan}

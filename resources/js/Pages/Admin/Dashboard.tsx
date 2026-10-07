@@ -18,10 +18,13 @@ import {
   ChevronRight,
   Database,
   User,
-  Info
+  Info,
+  FileSpreadsheet,
+  Download
 } from 'lucide-react';
 import { DEFAULT_VILLAGE_LOGO } from '@/data/logoPresets';
 import { PageProps } from '@/types';
+import { ImportVoterModal } from '@/Components/ImportVoterModal';
 
 interface TpsItem {
   id: number;
@@ -129,6 +132,7 @@ export default function AdminDashboard({
   const [isVoterModalOpen, setIsVoterModalOpen] = useState(false);
   const [editingVoter, setEditingVoter] = useState<VoterItem | null>(null);
   const [deletingVoter, setDeletingVoter] = useState<VoterItem | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Form TPS
   const tpsForm = useForm({
@@ -518,14 +522,36 @@ export default function AdminDashboard({
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={openCreateVoter}
-                className="px-4 py-2.5 rounded-2xl bg-[#58CC02] hover:bg-[#4ebb02] text-white font-black text-xs uppercase tracking-wider border-b-4 border-[#46A302] active:border-b-0 active:translate-y-1 transition-all flex items-center gap-2 shadow-xs cursor-pointer self-start sm:self-auto"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Tambah Pemilih DPS</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+                <a
+                  href="/admin/voters/template-excel"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3.5 py-2.5 rounded-2xl bg-white hover:bg-slate-100 text-[#1CB0F6] font-black text-xs uppercase tracking-wider border-2 border-[#1CB0F6]/30 hover:border-[#1CB0F6] active:translate-y-0.5 transition-all flex items-center gap-2 shadow-xs cursor-pointer"
+                  title="Unduh format template Excel sesuai formulir panitia"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>Format Excel</span>
+                </a>
+
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(true)}
+                  className="px-3.5 py-2.5 rounded-2xl bg-[#1CB0F6] hover:bg-[#189ddb] text-white font-black text-xs uppercase tracking-wider border-b-4 border-[#1899D6] active:border-b-0 active:translate-y-1 transition-all flex items-center gap-2 shadow-xs cursor-pointer"
+                >
+                  <FileSpreadsheet className="w-4 h-4" />
+                  <span>Import Excel DPS</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={openCreateVoter}
+                  className="px-4 py-2.5 rounded-2xl bg-[#58CC02] hover:bg-[#4ebb02] text-white font-black text-xs uppercase tracking-wider border-b-4 border-[#46A302] active:border-b-0 active:translate-y-1 transition-all flex items-center gap-2 shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>Tambah Manual</span>
+                </button>
+              </div>
             </div>
 
             {/* Filter & Search Bar */}
@@ -1288,6 +1314,13 @@ export default function AdminDashboard({
           </div>
         </div>
       )}
+
+      {/* MODAL: IMPORT EXCEL DPS */}
+      <ImportVoterModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        allTpsOptions={allTpsOptions}
+      />
     </div>
   );
 }

@@ -219,7 +219,7 @@ export const LogoManagerModal: React.FC<LogoManagerModalProps> = ({
                 : 'border-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
-            <span className="text-sm">🦅</span>
+            <Sparkles className="w-4 h-4 text-amber-500" />
             <span className="font-bold">5. Maskot Glawu</span>
           </button>
         </div>
@@ -584,7 +584,7 @@ export const LogoManagerModal: React.FC<LogoManagerModalProps> = ({
               </div>
 
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs flex items-start gap-2">
-                <span className="font-bold shrink-0">💡 Info:</span>
+                <span className="font-bold shrink-0 flex items-center gap-1"><Sparkles className="w-3.5 h-3.5 text-amber-600" /> Info:</span>
                 <span>
                   Watermark background dirancang tidak menghalangi tombol, formulir, atau teks apa pun, dan otomatis tampil saat dicetak.
                 </span>
@@ -596,8 +596,8 @@ export const LogoManagerModal: React.FC<LogoManagerModalProps> = ({
           {activeTab === 'mascot' && (
             <div className="space-y-6 animate-in fade-in">
               <div className="p-4 bg-sky-50 border border-sky-200 rounded-2xl flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0 text-xl font-bold">
-                  🦅
+                <div className="w-10 h-10 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-inner">
+                  <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <h4 className="font-bold text-sky-950 text-sm">

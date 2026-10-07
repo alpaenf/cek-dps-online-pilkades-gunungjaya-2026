@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, RefreshCw, CheckCircle2, AlertCircle, Users, Database, Sparkles, RotateCcw } from 'lucide-react';
+import { X, Save, RefreshCw, CheckCircle2, AlertCircle, Users, Database, Sparkles, RotateCcw, User, UserCheck } from 'lucide-react';
 import { DpsRecapData, TpsItem } from '../types/pilkades';
 import { DEFAULT_DPS_RECAP, applyTpsLocationsToRecap } from '../data/dpsRecapData';
 
@@ -219,8 +219,9 @@ export const RecapManagerModal: React.FC<RecapManagerModalProps> = ({
                   <div className="flex items-center gap-3 sm:w-2/3 justify-end">
                     {/* Laki-laki */}
                     <div className="flex-1 sm:max-w-[130px]">
-                      <label className="block text-[10px] font-mono font-bold text-sky-400 mb-1">
-                        👨 Laki-laki (L):
+                      <label className="text-[10px] font-mono font-bold text-sky-400 mb-1 flex items-center gap-1">
+                        <User className="w-3 h-3 text-sky-400 shrink-0" />
+                        <span>Laki-laki (L):</span>
                       </label>
                       <input
                         type="number"
@@ -233,8 +234,9 @@ export const RecapManagerModal: React.FC<RecapManagerModalProps> = ({
 
                     {/* Perempuan */}
                     <div className="flex-1 sm:max-w-[130px]">
-                      <label className="block text-[10px] font-mono font-bold text-rose-400 mb-1">
-                        👩 Perempuan (P):
+                      <label className="text-[10px] font-mono font-bold text-rose-400 mb-1 flex items-center gap-1">
+                        <UserCheck className="w-3 h-3 text-rose-400 shrink-0" />
+                        <span>Perempuan (P):</span>
                       </label>
                       <input
                         type="number"
@@ -275,11 +277,17 @@ export const RecapManagerModal: React.FC<RecapManagerModalProps> = ({
 
             <div className="grid grid-cols-2 gap-2 text-xs font-mono pt-2 border-t border-slate-800">
               <div className="flex items-center justify-between bg-slate-900/80 px-3 py-2 rounded-lg border border-sky-500/30">
-                <span className="text-sky-300">👨 Total Laki-laki:</span>
+                <span className="text-sky-300 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5 text-sky-400" />
+                  Total Laki-laki:
+                </span>
                 <strong className="text-white text-sm">{totalL.toLocaleString('id-ID')}</strong>
               </div>
               <div className="flex items-center justify-between bg-slate-900/80 px-3 py-2 rounded-lg border border-rose-500/30">
-                <span className="text-rose-300">👩 Total Perempuan:</span>
+                <span className="text-rose-300 flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-rose-400" />
+                  Total Perempuan:
+                </span>
                 <strong className="text-white text-sm">{totalP.toLocaleString('id-ID')}</strong>
               </div>
             </div>

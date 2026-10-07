@@ -38,6 +38,8 @@ export interface PilkadesConfig {
   whatsapp_panitia: string;
   alamat_sekretariat: string;
   pengumuman: string;
+  dataPhase?: string;
+  votingHours?: string;
 }
 
 export interface TpsItem {

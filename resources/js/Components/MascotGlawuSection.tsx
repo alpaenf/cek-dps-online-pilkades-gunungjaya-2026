@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Sparkles, Shield, CheckCircle2, Award, Megaphone, Share2, HelpCircle, ChevronRight, MessageSquareQuote, Edit3 } from 'lucide-react';
+import { Heart, Sparkles, Shield, CheckCircle2, Award, Megaphone, Share2, HelpCircle, ChevronRight, MessageSquareQuote, Edit3, RefreshCw } from 'lucide-react';
 import { DEFAULT_MASCOT_GLAWU, DEFAULT_MASCOT_GLAWU_GUIDE } from '../data/logoPresets';
 import { PilkadesConfig } from '../types/pilkades';
 
@@ -21,16 +21,18 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
   const [activeTab, setActiveTab] = useState<'filosofi' | 'pesan' | 'fakta'>('filosofi');
   const [cheerCount, setCheerCount] = useState(148);
   const [hasCheered, setHasCheered] = useState(false);
-  const [activeSpeech, setActiveSpeech] = useState(
-    '“Sugeng rawuh sedulur sedaya! Aja lali cek DPT-mu ya, sak swaramu nemtokake masa depan Desa Gunungjaya!”'
-  );
+
+  const phaseName = config.dataPhase || 'DPS';
+  const votingTime = config.votingHours || '07.00 - 13.00 WIB';
 
   const speeches = [
-    '“Sugeng rawuh sedulur sedaya! Aja lali cek DPT-mu ya, sak swaramu nemtokake masa depan Desa Gunungjaya!”',
+    `“Sugeng rawuh sedulur sedaya! Aja lali cek ${phaseName}-mu ya, sak swaramu nemtokake masa depan Desa Gunungjaya!”`,
     '“Beda pilihan kuwi lumrah lan wajar, sing penting paseduluran lan keguyuban tetep dijaga!”',
     '“Tolak Serangan Fajar & Politik Uang! Pilih pemimpin nganggo ati nurani sing resik.”',
-    '“Tanggal pencoblosan teka gasik neng TPS jam 07.00 - 13.00 WIB, nggawa e-KTP ya Lur!”'
+    `“Tanggal pencoblosan teka gasik neng TPS jam ${votingTime}, nggawa e-KTP ya Lur!”`
   ];
+
+  const [activeSpeech, setActiveSpeech] = useState(speeches[0]);
 
   const handleCheer = () => {
     if (!hasCheered) {
@@ -86,8 +88,8 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                 />
 
                 {/* Floating Tag */}
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-xs text-amber-300 text-xs font-semibold px-4 py-1.5 rounded-full shadow-md whitespace-nowrap border border-amber-500/40 font-mono">
-                  🦅 Burung Khas Lereng Gunung Slamet
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-xs text-amber-300 text-xs font-semibold px-4 py-1.5 rounded-full shadow-md whitespace-nowrap border border-amber-500/40 font-mono flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Burung Khas Lereng Gunung Slamet
                 </div>
               </div>
 
@@ -103,9 +105,10 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                     <button
                       type="button"
                       onClick={handleRandomQuote}
-                      className="text-[11px] font-bold text-amber-400 hover:text-amber-300 underline flex items-center gap-1 cursor-pointer font-mono"
+                      className="text-[11px] font-bold text-amber-400 hover:text-amber-300 underline flex items-center gap-1.5 cursor-pointer font-mono"
                     >
-                      <span>🔄 Ganti Nasehat Glawu</span>
+                      <RefreshCw className="w-3 h-3 text-amber-400" />
+                      <span>Ganti Nasehat Glawu</span>
                     </button>
                   </div>
                 </div>
@@ -133,7 +136,7 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                   }`}
                 >
                   <Heart className={`w-4 h-4 ${hasCheered ? 'fill-rose-400 text-rose-400' : ''}`} />
-                  <span>{hasCheered ? 'Dukungan Terkirim!' : 'Dukung Glawu ❤️'}</span>
+                  <span>{hasCheered ? 'Dukungan Terkirim!' : 'Dukung Glawu'}</span>
                 </button>
               </div>
             </div>
@@ -152,7 +155,8 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                     : 'text-slate-300 hover:text-white hover:bg-slate-850'
                 }`}
               >
-                <span>📜 Filosofi & Makna</span>
+                <Award className="w-4 h-4" />
+                <span>Filosofi & Makna</span>
               </button>
 
               <button
@@ -164,7 +168,8 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                     : 'text-slate-300 hover:text-white hover:bg-slate-850'
                 }`}
               >
-                <span>📢 4 Ajakan Glawu</span>
+                <Megaphone className="w-4 h-4" />
+                <span>4 Ajakan Glawu</span>
               </button>
 
               <button
@@ -176,7 +181,8 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                     : 'text-slate-300 hover:text-white hover:bg-slate-850'
                 }`}
               >
-                <span>🛡️ Tata Nilai Pilkades</span>
+                <Shield className="w-4 h-4" />
+                <span>Tata Nilai Pilkades</span>
               </button>
             </div>
 
@@ -185,7 +191,7 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
               <div className="bg-slate-900/90 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-slate-700/80 shadow-2xl space-y-4 animate-in fade-in">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center font-bold text-lg">
-                    ✨
+                    <Sparkles className="w-5 h-5 text-amber-400" />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white font-serif">
@@ -264,7 +270,7 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
               <div className="bg-slate-900/90 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-slate-700/80 shadow-2xl space-y-4 animate-in fade-in">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center font-bold text-lg">
-                    📢
+                    <Megaphone className="w-5 h-5 text-amber-400" />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white font-serif">
@@ -341,7 +347,7 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
               <div className="bg-slate-900/90 backdrop-blur-xl rounded-3xl p-6 sm:p-8 border border-slate-700/80 shadow-2xl space-y-4 animate-in fade-in">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center justify-center font-bold text-lg">
-                    🛡️
+                    <Shield className="w-5 h-5 text-emerald-400" />
                   </div>
                   <div>
                     <h3 className="text-lg font-bold text-white font-serif">

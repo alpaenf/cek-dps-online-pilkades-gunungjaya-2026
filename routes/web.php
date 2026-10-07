@@ -53,6 +53,11 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::put('/voters/{voter}', [AdminVoterController::class, 'update'])->name('admin.voters.update');
     Route::delete('/voters/{voter}', [AdminVoterController::class, 'destroy'])->name('admin.voters.destroy');
 
+    // Import & Template Excel DPS
+    Route::post('/voters/import-chunk', [AdminVoterController::class, 'importChunk'])->name('admin.voters.import.chunk');
+    Route::post('/voters/import-file', [AdminVoterController::class, 'importFile'])->name('admin.voters.import.file');
+    Route::get('/voters/template-excel', [AdminVoterController::class, 'downloadTemplate'])->name('admin.voters.template');
+
     // Pengaturan Profil Admin (WhatsApp, Email, Password)
     Route::get('/profile', [AdminProfileController::class, 'edit'])->name('admin.profile.edit');
     Route::patch('/profile', [AdminProfileController::class, 'update'])->name('admin.profile.update');
