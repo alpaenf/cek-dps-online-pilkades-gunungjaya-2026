@@ -32,6 +32,39 @@ class DpsSearchController extends Controller
             'whatsapp_panitia' => $settings['whatsapp_panitia'] ?? '6285226123456',
             'alamat_sekretariat' => $settings['alamat_sekretariat'] ?? 'Sekretariat P2KD - Balai Desa Gunungjaya',
             'pengumuman' => $settings['pengumuman'] ?? 'Pengecekan DPS Online telah dibuka. Pastikan NIK Anda terdaftar!',
+            'dataPhase' => $settings['data_phase'] ?? 'DPS',
+            'votingHours' => $settings['voting_hours'] ?? '07.00 - 13.00 WIB',
+            'mascot_title' => $settings['mascot_title'] ?? 'Kenalkan, “GLAWU” Maskot Resmi Pilkades Gunungjaya 2026',
+            'mascot_desc' => $settings['mascot_desc'] ?? 'Karakter sahabat pemilih yang ceria, berwibawa, dan sarat kearifan lokal. GLAWU hadir mengajak seluruh warga Desa Gunungjaya mewujudkan Pilkades yang aman, damai, bermartabat, dan tanpa politik uang.',
+            'mascot_slogan' => $settings['mascot_slogan'] ?? '“Gunungjaya Guyub Rukun, Sukseskan Pilkades Bersama Glawu!”',
+            'mascot_speeches' => !empty($settings['mascot_speeches']) ? json_decode($settings['mascot_speeches'], true) : [
+                '“Sugeng rawuh sedulur sedaya! Aja lali cek DPS-mu ya, sak swaramu nemtokake masa depan Desa Gunungjaya!”',
+                '“Beda pilihan kuwi lumrah lan wajar, sing penting paseduluran lan keguyuban tetep dijaga!”',
+                '“Tolak Serangan Fajar & Politik Uang! Pilih pemimpin nganggo ati nurani sing resik.”',
+                '“Tanggal pencoblosan teka gasik neng TPS jam 07.00 - 13.00 WIB, nggawa e-KTP ya Lur!”',
+            ],
+            'mascot_ajakan' => [
+                [
+                    'num' => 1,
+                    'title' => $settings['ajakan_1_title'] ?? 'Cek NIK di DPT Secara Online Sekarang',
+                    'desc' => $settings['ajakan_1_desc'] ?? 'Jangan menunggu hari H. Pastikan namamu sudah tertera di Daftar Pemilih Tetap (DPT) dan ketahui nomor TPS tempatmu mencoblos.',
+                ],
+                [
+                    'num' => 2,
+                    'title' => $settings['ajakan_2_title'] ?? 'Ketahui Visi, Misi, & Program Calon Kepala Desa',
+                    'desc' => $settings['ajakan_2_desc'] ?? 'Pilihlah calon pemimpin yang memiliki komitmen tulus memajukan Desa Gunungjaya, transparan dalam anggaran desa, dan mengayomi seluruh warga.',
+                ],
+                [
+                    'num' => 3,
+                    'title' => $settings['ajakan_3_title'] ?? 'Tolak Segala Bentuk Politik Uang (Anti Money Politics)',
+                    'desc' => $settings['ajakan_3_desc'] ?? 'Jangan gadaikan masa depan desa selama 6 tahun hanya demi nominal sesaat. Pemimpin berintegritas lahir dari pemilih yang bermartabat.',
+                ],
+                [
+                    'num' => 4,
+                    'title' => $settings['ajakan_4_title'] ?? 'Hadir Tepat Waktu di TPS (07.00 - 13.00 WIB)',
+                    'desc' => $settings['ajakan_4_desc'] ?? 'Bawalah dokumen resmi (e-KTP asli / Surat Keterangan dan Surat Pemberitahuan/Model C6). Gunakan hak suaramu dan celupkan jari ke tinta!',
+                ],
+            ],
         ];
 
         $tpsList = Tps::orderBy('nomor_tps')->get()->map(function ($item) {

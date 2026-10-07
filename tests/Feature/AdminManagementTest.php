@@ -151,4 +151,43 @@ class AdminManagementTest extends TestCase
             'value' => '081234567890',
         ]);
     }
+
+    public function test_admin_can_update_mascot_and_redaksi_settings(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $response = $this->actingAs($admin)->post('/admin/settings/mascot', [
+            'mascot_title' => 'Judul Baru Maskot Glawu Keren',
+            'mascot_desc' => 'Deskripsi baru karakter Glawu ramah warga.',
+            'mascot_slogan' => 'Pilkades Damai, Gunungjaya Bersatu!',
+            'mascot_speeches' => "Halo warga RT 01!\nAyo sukseskan Pilkades!\nJaga kerukunan bersama.",
+            'ajakan_1_title' => 'Poin Ajakan Satu',
+            'ajakan_1_desc' => 'Deskripsi ajakan satu',
+            'ajakan_2_title' => 'Poin Ajakan Dua',
+            'ajakan_2_desc' => 'Deskripsi ajakan dua',
+            'ajakan_3_title' => 'Poin Ajakan Tiga Anti Politik Uang',
+            'ajakan_3_desc' => 'Deskripsi ajakan tiga',
+            'ajakan_4_title' => 'Poin Ajakan Empat',
+            'ajakan_4_desc' => 'Deskripsi ajakan empat',
+            'data_phase' => 'DPT',
+            'pengumuman' => 'Pengumuman terbaru Pilkades 2026',
+        ]);
+
+        $response->assertRedirect('/admin/dashboard?tab=redaksi');
+        $response->assertSessionHas('success');
+
+        $this->assertDatabaseHas('app_settings', [
+            'key' => 'mascot_title',
+            'value' => 'Judul Baru Maskot Glawu Keren',
+        ]);
+        $this->assertDatabaseHas('app_settings', [
+            'key' => 'mascot_slogan',
+            'value' => 'Pilkades Damai, Gunungjaya Bersatu!',
+        ]);
+        $this->assertDatabaseHas('app_settings', [
+            'key' => 'data_phase',
+            'value' => 'DPT',
+        ]);
+    }
 }
+

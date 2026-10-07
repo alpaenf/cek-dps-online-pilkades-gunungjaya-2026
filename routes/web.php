@@ -61,6 +61,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     // Pengaturan Profil Admin (WhatsApp, Email, Password)
     Route::get('/profile', [AdminProfileController::class, 'edit'])->name('admin.profile.edit');
     Route::patch('/profile', [AdminProfileController::class, 'update'])->name('admin.profile.update');
+
+    // Pengaturan Redaksi Maskot & Slogan Pilkades
+    Route::post('/settings/mascot', [AdminDashboardController::class, 'updateMascotSettings'])->name('admin.settings.mascot');
 });
 
 Route::middleware('auth')->group(function () {

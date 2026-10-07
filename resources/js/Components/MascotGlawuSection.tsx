@@ -25,12 +25,14 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
   const phaseName = config.dataPhase || 'DPS';
   const votingTime = config.votingHours || '07.00 - 13.00 WIB';
 
-  const speeches = [
-    `“Sugeng rawuh sedulur sedaya! Aja lali cek ${phaseName}-mu ya, sak swaramu nemtokake masa depan Desa Gunungjaya!”`,
-    '“Beda pilihan kuwi lumrah lan wajar, sing penting paseduluran lan keguyuban tetep dijaga!”',
-    '“Tolak Serangan Fajar & Politik Uang! Pilih pemimpin nganggo ati nurani sing resik.”',
-    `“Tanggal pencoblosan teka gasik neng TPS jam ${votingTime}, nggawa e-KTP ya Lur!”`
-  ];
+  const speeches = config.mascot_speeches && config.mascot_speeches.length > 0
+    ? config.mascot_speeches
+    : [
+      `“Sugeng rawuh sedulur sedaya! Aja lali cek ${phaseName}-mu ya, sak swaramu nemtokake masa depan Desa ${config.desa || 'Gunungjaya'}!”`,
+      '“Beda pilihan kuwi lumrah lan wajar, sing penting paseduluran lan keguyuban tetep dijaga!”',
+      '“Tolak Serangan Fajar & Politik Uang! Pilih pemimpin nganggo ati nurani sing resik.”',
+      `“Tanggal pencoblosan teka gasik neng TPS jam ${votingTime}, nggawa e-KTP ya Lur!”`
+    ];
 
   const [activeSpeech, setActiveSpeech] = useState(speeches[0]);
 
@@ -45,6 +47,42 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
     const nextIdx = Math.floor(Math.random() * speeches.length);
     setActiveSpeech(speeches[nextIdx]);
   };
+
+  const defaultAjakan = [
+    {
+      num: 1,
+      title: 'Cek NIK di DPT Secara Online Sekarang',
+      desc: 'Jangan menunggu hari H. Pastikan namamu sudah tertera di Daftar Pemilih Tetap (DPT) dan ketahui nomor TPS tempatmu mencoblos.',
+      color: 'bg-amber-500 text-slate-950',
+    },
+    {
+      num: 2,
+      title: 'Ketahui Visi, Misi, & Program Calon Kepala Desa',
+      desc: `Pilihlah calon pemimpin yang memiliki komitmen tulus memajukan Desa ${config.desa || 'Gunungjaya'}, transparan dalam anggaran desa, dan mengayomi seluruh warga.`,
+      color: 'bg-emerald-500 text-slate-950',
+    },
+    {
+      num: 3,
+      title: 'Tolak Segala Bentuk Politik Uang (Anti Money Politics)',
+      desc: 'Jangan gadaikan masa depan desa selama 6 tahun hanya demi nominal sesaat. Pemimpin berintegritas lahir dari pemilih yang bermartabat.',
+      color: 'bg-rose-500 text-white',
+    },
+    {
+      num: 4,
+      title: `Hadir Tepat Waktu di TPS (${votingTime})`,
+      desc: 'Bawalah dokumen resmi (e-KTP asli / Surat Keterangan dan Surat Pemberitahuan/Model C6). Gunakan hak suaramu dan celupkan jari ke tinta!',
+      color: 'bg-purple-500 text-white',
+    },
+  ];
+
+  const ajakanList = config.mascot_ajakan && config.mascot_ajakan.length > 0
+    ? config.mascot_ajakan.map((item, idx) => ({
+        num: item.num || idx + 1,
+        title: item.title,
+        desc: item.desc,
+        color: defaultAjakan[idx]?.color || 'bg-amber-500 text-slate-950',
+      }))
+    : defaultAjakan;
 
   return (
     <section id="maskot-glawu" className="py-14 sm:py-20 bg-gradient-to-b from-black/60 via-slate-950/60 to-black/75 backdrop-blur-xs border-b border-white/10 relative overflow-hidden text-slate-100">
@@ -61,11 +99,25 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
           </div>
 
           <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight font-serif">
-            Kenalkan, <span className="text-amber-400">“GLAWU”</span> Maskot Resmi Pilkades Gunungjaya 2026
+            {config.mascot_title || (
+              <>Kenalkan, <span className="text-amber-400">“GLAWU”</span> Maskot Resmi Pilkades Gunungjaya 2026</>
+            )}
           </h2>
           <p className="mt-3 text-slate-300 text-sm sm:text-base leading-relaxed">
-            Karakter sahabat pemilih yang ceria, berwibawa, dan sarat kearifan lokal. GLAWU hadir mengajak seluruh warga Desa Gunungjaya mewujudkan Pilkades yang aman, damai, bermartabat, dan tanpa politik uang.
+            {config.mascot_desc || 'Karakter sahabat pemilih yang ceria, berwibawa, dan sarat kearifan lokal. GLAWU hadir mengajak seluruh warga Desa Gunungjaya mewujudkan Pilkades yang aman, damai, bermartabat, dan tanpa politik uang.'}
           </p>
+
+          {isAdmin && (
+            <div className="mt-4 flex justify-center">
+              <a
+                href="/admin/dashboard?tab=redaksi"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 font-black text-xs rounded-xl shadow-md transition transform active:scale-95 cursor-pointer font-sans"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>Atur Redaksi Ini di Dashboard Admin</span>
+              </a>
+            </div>
+          )}
         </div>
 
         {/* Main Grid: Visual Mascot on Left, Meaning & Interactive Tabs on Right */}
@@ -248,10 +300,10 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                 <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-950 to-slate-900 border border-amber-500/40 text-white flex flex-col sm:flex-row items-center justify-between gap-3 mt-4">
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-widest text-amber-400 block font-mono">
-                      SLOGAN PILKADES GUNUNGJAYA 2026
+                      SLOGAN PILKADES {config.desa?.toUpperCase() || 'GUNUNGJAYA'} {config.tahun || '2026'}
                     </span>
                     <p className="text-sm font-bold font-serif text-white">
-                      “Gunungjaya Guyub Rukun, Sukseskan Pilkades Bersama Glawu!”
+                      {config.mascot_slogan || '“Gunungjaya Guyub Rukun, Sukseskan Pilkades Bersama Glawu!”'}
                     </p>
                   </div>
                   <button
@@ -283,61 +335,21 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                 </div>
 
                 <div className="space-y-3 pt-2">
-                  <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800">
-                    <span className="w-7 h-7 rounded-xl bg-amber-500 text-slate-950 font-mono font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      1
-                    </span>
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white">
-                        Cek NIK di DPT Secara Online Sekarang
-                      </h4>
-                      <p className="text-xs text-slate-300 mt-0.5">
-                        Jangan menunggu hari H. Pastikan namamu sudah tertera di Daftar Pemilih Tetap (DPT) dan ketahui nomor TPS tempatmu mencoblos.
-                      </p>
+                  {ajakanList.map((item) => (
+                    <div key={item.num} className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800">
+                      <span className={`w-7 h-7 rounded-xl font-mono font-black text-xs flex items-center justify-center shrink-0 mt-0.5 ${item.color}`}>
+                        {item.num}
+                      </span>
+                      <div>
+                        <h4 className="text-xs sm:text-sm font-bold text-white">
+                          {item.title}
+                        </h4>
+                        <p className="text-xs text-slate-300 mt-0.5 leading-relaxed">
+                          {item.desc}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800">
-                    <span className="w-7 h-7 rounded-xl bg-emerald-500 text-slate-950 font-mono font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      2
-                    </span>
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white">
-                        Ketahui Visi, Misi, & Program Calon Kepala Desa
-                      </h4>
-                      <p className="text-xs text-slate-300 mt-0.5">
-                        Pilihlah calon pemimpin yang memiliki komitmen tulus memajukan Desa Gunungjaya, transparan dalam anggaran desa, dan mengayomi seluruh warga.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800">
-                    <span className="w-7 h-7 rounded-xl bg-rose-500 text-white font-mono font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      3
-                    </span>
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white">
-                        Tolak Segala Bentuk Politik Uang (Anti Money Politics)
-                      </h4>
-                      <p className="text-xs text-slate-300 mt-0.5">
-                        Jangan gadaikan masa depan desa selama 6 tahun hanya demi nominal sesaat. Pemimpin berintegritas lahir dari pemilih yang bermartabat.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800">
-                    <span className="w-7 h-7 rounded-xl bg-purple-500 text-white font-mono font-black text-xs flex items-center justify-center shrink-0 mt-0.5">
-                      4
-                    </span>
-                    <div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white">
-                        Hadir Tepat Waktu di TPS (07.00 - 13.00 WIB)
-                      </h4>
-                      <p className="text-xs text-slate-300 mt-0.5">
-                        Bawalah dokumen resmi (e-KTP asli / Surat Keterangan dan Surat Pemberitahuan/Model C6). Gunakan hak suaramu dan celupkan jari ke tinta!
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
             )}

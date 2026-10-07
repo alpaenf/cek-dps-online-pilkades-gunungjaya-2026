@@ -40,6 +40,15 @@ export interface PilkadesConfig {
   pengumuman: string;
   dataPhase?: string;
   votingHours?: string;
+  mascot_title?: string;
+  mascot_desc?: string;
+  mascot_slogan?: string;
+  mascot_speeches?: string[];
+  mascot_ajakan?: {
+    num: number;
+    title: string;
+    desc: string;
+  }[];
 }
 
 export interface TpsItem {

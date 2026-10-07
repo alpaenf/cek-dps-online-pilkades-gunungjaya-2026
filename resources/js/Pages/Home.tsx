@@ -11,6 +11,7 @@ import { DuolingoSplashScreen } from '@/Components/DuolingoSplashScreen';
 import { ShareModal } from '@/Components/ShareModal';
 import { WatermarkBackground } from '@/Components/WatermarkBackground';
 import { Footer } from '@/Components/Footer';
+import { MascotGlawuSection } from '@/Components/MascotGlawuSection';
 import { DEFAULT_CONFIG, DEFAULT_TPS_LIST, executeDptCheck } from '@/data/mockDatabase';
 import { DEFAULT_VILLAGE_LOGO, DEFAULT_MASCOT_GLAWU } from '@/data/logoPresets';
 import { DptPublicResult, PilkadesConfig, TpsItem, DpsRecapData } from '@/types/pilkades';
@@ -215,6 +216,20 @@ export default function Home({
                 mascotSrc={mascotSrc}
               />
             )}
+
+            {/* Bagian Profil, Pesan & Makna Maskot Glawu */}
+            <MascotGlawuSection
+              config={config}
+              onScrollToSearch={() => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                const nikInput = document.getElementById('nik-input');
+                if (nikInput) {
+                  nikInput.focus();
+                }
+              }}
+              mascotSrc={mascotSrc}
+              isAdmin={isAdmin}
+            />
           </div>
         )}
 
