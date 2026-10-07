@@ -131,16 +131,22 @@ fi
 # 6. Kompilasi Frontend Assets (Vite / React)
 # ------------------------------------------------------------------------------
 echo "🎨 [5/8] Memeriksa & mengompilasi aset frontend (Vite)..."
+# Hapus file hot dev server agar Laravel selalu memakai build produksi
+rm -f public/hot "$PUBLIC_HTML_PATH/hot" 2>/dev/null || true
+
 if [ "$SKIP_BUILD" = false ]; then
     if command -v $NPM_BIN >/dev/null 2>&1; then
         echo "   ⚡ Menjalankan npm run build..."
         $NPM_BIN run build
     else
-        echo "   ⚠️ npm tidak ditemukan. Pastikan folder public/build sudah di-build secara lokal."
+        echo "   ℹ️ npm tidak ditemukan di server. Menggunakan aset build produksi dari repository."
     fi
 else
     echo "   ⏭️ Melewati kompilasi frontend (--skip-build aktif)."
 fi
+
+# Pastikan file hot selalu terhapus setelah proses apapun
+rm -f public/hot "$PUBLIC_HTML_PATH/hot" 2>/dev/null || true
 
 # ------------------------------------------------------------------------------
 # 7. Migrasi Database & Seeder
@@ -181,8 +187,14 @@ if [ -d "$PUBLIC_HTML_PATH" ]; then
     echo "   📂 Terdeteksi folder cPanel: $PUBLIC_HTML_PATH"
     echo "   📋 Menyalin file publik ke $PUBLIC_HTML_PATH..."
 
+    # Pastikan file hot tidak terbawa ke public_html
+    rm -f public/hot "$PUBLIC_HTML_PATH/hot" 2>/dev/null || true
+
     # Salin semua isi public/ ke public_html
     cp -r public/* "$PUBLIC_HTML_PATH/"
+
+    # Pastikan kembali file hot terhapus di public_html
+    rm -f "$PUBLIC_HTML_PATH/hot" 2>/dev/null || true
 
     # Salin .htaccess jika ada
     if [ -f "public/.htaccess" ]; then
