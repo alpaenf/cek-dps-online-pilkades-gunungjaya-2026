@@ -173,7 +173,7 @@ $PHP_BIN artisan view:cache
 $PHP_BIN artisan event:cache 2>/dev/null || true
 
 # Buat symbolic link storage Laravel jika belum ada
-$PHP_BIN artisan storage:link || true
+$PHP_BIN artisan storage:link --force 2>/dev/null || true
 
 # Pastikan folder writable oleh web server
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true

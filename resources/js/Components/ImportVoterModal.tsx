@@ -52,6 +52,13 @@ interface ParsedVoterRow {
   _isValidNik: boolean;
 }
 
+interface SkippedRowInfo {
+  rowNumber: number;
+  nik: string;
+  nama: string;
+  reason: string;
+}
+
 export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
   isOpen,
   onClose,
@@ -62,6 +69,10 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
   const [parsedRows, setParsedRows] = useState<ParsedVoterRow[]>([]);
   const [headerColumns, setHeaderColumns] = useState<string[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
+
+  // Baris yang dilewati saat parsing (di sisi klien)
+  const [skippedInParsing, setSkippedInParsing] = useState<SkippedRowInfo[]>([]);
+  const [showSkippedWarning, setShowSkippedWarning] = useState(false);
 
   // Settings
   const [updateExisting, setUpdateExisting] = useState(true);
@@ -77,7 +88,11 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
     updated: number;
     skipped: number;
     total: number;
+    totalInFile: number;
   } | null>(null);
+  // Baris yang dilewati oleh backend
+  const [skippedDetailRows, setSkippedDetailRows] = useState<SkippedRowInfo[]>([]);
+  const [showSkippedDetail, setShowSkippedDetail] = useState(false);
 
   // Direct File Upload State
   const [activeTab, setActiveTab] = useState<'chunk' | 'direct'>('chunk');
@@ -99,6 +114,10 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
     setImportResult(null);
     setIsDirectUploading(false);
     setDirectUploadError(null);
+    setSkippedInParsing([]);
+    setShowSkippedWarning(false);
+    setSkippedDetailRows([]);
+    setShowSkippedDetail(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -264,6 +283,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
         // Ambil baris data
         const dataStartIndex = (subHeaderRowIdx !== -1 ? subHeaderRowIdx : headerRowIdx) + 1;
         const validRows: ParsedVoterRow[] = [];
+        const skippedRows: SkippedRowInfo[] = [];
 
         for (let r = dataStartIndex; r < rawData.length; r++) {
           const row = rawData[r];
@@ -284,9 +304,45 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
           // Bersihkan NIK
           const rawNik = String(item.nik || '').replace(/\D/g, '');
           const nama = String(item.nama || '').trim();
+          const rowNumber = r + 1; // 1-indexed (sesuai baris Excel)
 
-          // Abaikan baris jika nama kosong atau berisi kata 'TOTAL' / 'JUMLAH'
-          if (!nama || nama.toUpperCase().includes('TOTAL') || nama.toUpperCase().includes('JUMLAH')) {
+          // Abaikan baris total/jumlah (baris footer)
+          if (nama && (nama.toUpperCase().includes('TOTAL') || nama.toUpperCase().includes('JUMLAH'))) {
+            continue;
+          }
+
+          // Catat baris yang dilewati beserta alasannya
+          if (!nama) {
+            skippedRows.push({ rowNumber, nik: rawNik || '(kosong)', nama: '(kosong)', reason: 'Nama pemilih kosong' });
+            continue;
+          }
+          if (rawNik.length !== 16) {
+            skippedRows.push({
+              rowNumber,
+              nik: rawNik || '(kosong)',
+              nama,
+              reason: rawNik.length === 0
+                ? 'NIK kosong'
+                : `NIK tidak valid — terdeteksi ${rawNik.length} digit (harus 16 digit)`,
+            });
+            // Tetap masukkan ke validRows dengan flag NIK tidak valid agar bisa dipreview
+            validRows.push({
+              no_dpt: item.no_dpt || '',
+              no: item.no || '',
+              nik: rawNik,
+              nama,
+              jenis_kelamin: item.jenis_kelamin || 'L',
+              tempat_lahir: item.tempat_lahir || '',
+              tanggal_lahir: item.tanggal_lahir || '',
+              dusun: item.dusun || '',
+              rt: item.rt || '',
+              rw: item.rw || '',
+              tps: item.tps || '',
+              status: item.status || 'AKTIF',
+              ket: item.ket || '',
+              keterangan: item.keterangan || '',
+              _isValidNik: false,
+            });
             continue;
           }
 
@@ -294,7 +350,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
             no_dpt: item.no_dpt || '',
             no: item.no || '',
             nik: rawNik,
-            nama: nama,
+            nama,
             jenis_kelamin: item.jenis_kelamin || 'L',
             tempat_lahir: item.tempat_lahir || '',
             tanggal_lahir: item.tanggal_lahir || '',
@@ -305,15 +361,17 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
             status: item.status || 'AKTIF',
             ket: item.ket || '',
             keterangan: item.keterangan || '',
-            _isValidNik: rawNik.length === 16,
+            _isValidNik: true,
           });
         }
 
-        if (validRows.length === 0) {
+        if (validRows.length === 0 && skippedRows.length === 0) {
           throw new Error('Tidak ada baris data pemilih yang valid ditemukan dalam lembar kerja.');
         }
 
         setParsedRows(validRows);
+        setSkippedInParsing(skippedRows);
+        setShowSkippedWarning(skippedRows.length > 0);
         setIsParsing(false);
       } catch (err: any) {
         setIsParsing(false);
@@ -333,20 +391,28 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
    * Eksekusi Chunked Import ke Backend Laravel
    */
   const handleStartChunkImport = async () => {
-    if (parsedRows.length === 0) return;
+    // Hanya kirim baris yang NIK-nya valid
+    const validForImport = parsedRows.filter(r => r._isValidNik);
+    if (validForImport.length === 0) {
+      setParseError('Tidak ada baris dengan NIK valid (16 digit) yang bisa diimpor.');
+      return;
+    }
 
     setIsImporting(true);
     setImportProgress(0);
     setCurrentChunkInfo('Mempersiapkan data import...');
     setImportResult(null);
+    setSkippedDetailRows([]);
 
-    const CHUNK_SIZE = 150; // 150 pemilih per request untuk performa aman & tanpa timeout
-    const totalRecords = parsedRows.length;
+    const CHUNK_SIZE = 150;
+    const totalRecords = validForImport.length;
+    const totalInFile = parsedRows.length + skippedInParsing.length; // total baris di file
     const totalChunks = Math.ceil(totalRecords / CHUNK_SIZE);
 
     let totalInserted = 0;
     let totalUpdated = 0;
     let totalSkipped = 0;
+    const allSkippedFromBackend: SkippedRowInfo[] = [];
 
     // Ambil CSRF token
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -355,13 +421,12 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
       for (let i = 0; i < totalChunks; i++) {
         const start = i * CHUNK_SIZE;
         const end = Math.min(start + CHUNK_SIZE, totalRecords);
-        const chunk = parsedRows.slice(start, end);
+        const chunk = validForImport.slice(start, end);
 
         setCurrentChunkInfo(
-          `Mengunggah paket ${i + 1} dari ${totalChunks} (Pemilih baris ${start + 1} - ${end})...`
+          `Mengunggah paket ${i + 1} dari ${totalChunks} (baris ${start + 1}–${end} dari ${totalRecords} valid)...`
         );
 
-        // Hanya chunk pertama yang mengeksekusi reset_first jika opsi reset aktif
         const isResetThisChunk = i === 0 && resetFirst;
 
         const response = await fetch('/admin/voters/import-chunk', {
@@ -389,18 +454,31 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
         totalUpdated += resData.updated || 0;
         totalSkipped += resData.skipped || 0;
 
+        // Kumpulkan detail baris yang dilewati backend
+        if (resData.skipped_rows && Array.isArray(resData.skipped_rows)) {
+          allSkippedFromBackend.push(...resData.skipped_rows);
+        }
+
         const progressPercent = Math.round(((i + 1) / totalChunks) * 100);
         setImportProgress(progressPercent);
       }
 
+      // Gabungkan skip dari parsing + backend
+      const allSkipped = [
+        ...skippedInParsing,
+        ...allSkippedFromBackend,
+      ];
+      setSkippedDetailRows(allSkipped);
+
       setImportResult({
         inserted: totalInserted,
         updated: totalUpdated,
-        skipped: totalSkipped,
+        skipped: totalSkipped + skippedInParsing.length,
         total: totalRecords,
+        totalInFile,
       });
       setIsImporting(false);
-      setCurrentChunkInfo('Import selesai dengan sukses!');
+      setCurrentChunkInfo('Import selesai!');
     } catch (error: any) {
       setIsImporting(false);
       setParseError(`Proses import terhenti: ${error.message}`);
@@ -484,49 +562,94 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
           
           {/* Hasil Sukses */}
           {importResult ? (
-            <div className="bg-[#58CC02]/10 border-2 border-[#58CC02] rounded-3xl p-6 text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-[#58CC02] text-white flex items-center justify-center mx-auto shadow-md animate-bounce">
-                <Check className="w-9 h-9 stroke-[3]" />
-              </div>
-              <div>
-                <h4 className="text-xl font-black text-slate-900">
-                  Data DPS Berhasil Diimpor!
-                </h4>
-                <p className="text-xs sm:text-sm text-slate-600 font-bold mt-1">
-                  Seluruh data pemilih telah disimpan dan terdistribusi ke TPS terkait.
-                </p>
+            <div className="space-y-4">
+              <div className="bg-[#58CC02]/10 border-2 border-[#58CC02] rounded-3xl p-6 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-[#58CC02] text-white flex items-center justify-center mx-auto shadow-md animate-bounce">
+                  <Check className="w-9 h-9 stroke-[3]" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-black text-slate-900">
+                    Data DPS Berhasil Diimpor!
+                  </h4>
+                  <p className="text-xs sm:text-sm text-slate-600 font-bold mt-1">
+                    {importResult.inserted + importResult.updated} dari {importResult.totalInFile.toLocaleString('id-ID')} baris dalam file berhasil disimpan ke database.
+                  </p>
+                </div>
+
+                {/* Rincian Angka */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-2xl mx-auto pt-2">
+                  <div className="bg-white p-3 rounded-2xl border-2 border-slate-200">
+                    <span className="text-[10px] font-black uppercase text-slate-400 block">Total di File</span>
+                    <span className="text-lg font-black text-slate-800">{importResult.totalInFile.toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="bg-white p-3 rounded-2xl border-2 border-[#58CC02]/40">
+                    <span className="text-[10px] font-black uppercase text-[#58CC02] block">Pemilih Baru</span>
+                    <span className="text-lg font-black text-[#58CC02]">+{importResult.inserted.toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className="bg-white p-3 rounded-2xl border-2 border-[#1CB0F6]/40">
+                    <span className="text-[10px] font-black uppercase text-[#1CB0F6] block">Diperbarui</span>
+                    <span className="text-lg font-black text-[#1CB0F6]">{importResult.updated.toLocaleString('id-ID')}</span>
+                  </div>
+                  <div className={`bg-white p-3 rounded-2xl border-2 ${importResult.skipped > 0 ? 'border-amber-300' : 'border-slate-200'}`}>
+                    <span className={`text-[10px] font-black uppercase block ${importResult.skipped > 0 ? 'text-amber-600' : 'text-slate-500'}`}>Dilewati</span>
+                    <span className={`text-lg font-black ${importResult.skipped > 0 ? 'text-amber-600' : 'text-slate-600'}`}>{importResult.skipped.toLocaleString('id-ID')}</span>
+                  </div>
+                </div>
+
+                <div className="pt-3">
+                  <button
+                    type="button"
+                    onClick={handleFinishAndReload}
+                    className="px-6 py-3 rounded-2xl bg-[#58CC02] hover:bg-[#4ebb02] text-white font-black text-xs uppercase tracking-wider border-b-4 border-[#46A302] active:border-b-0 active:translate-y-1 transition-all shadow-md cursor-pointer inline-flex items-center gap-2"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Selesai & Muat Ulang Dashboard</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Rincian Angka */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl mx-auto pt-2">
-                <div className="bg-white p-3 rounded-2xl border-2 border-slate-200">
-                  <span className="text-[10px] font-black uppercase text-slate-400 block">Total Diproses</span>
-                  <span className="text-lg font-black text-slate-800">{importResult.total.toLocaleString('id-ID')}</span>
+              {/* Panel Detail Baris Dilewati */}
+              {skippedDetailRows.length > 0 && (
+                <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setShowSkippedDetail(!showSkippedDetail)}
+                    className="w-full flex items-center justify-between p-4 text-left cursor-pointer hover:bg-amber-100 transition"
+                  >
+                    <div className="flex items-center gap-2 text-amber-700">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <span className="text-xs font-black uppercase tracking-wider">
+                        {skippedDetailRows.length} baris dilewati — lihat detail alasan
+                      </span>
+                    </div>
+                    <span className="text-xs font-black text-amber-600">{showSkippedDetail ? '▲ Tutup' : '▼ Buka'}</span>
+                  </button>
+                  {showSkippedDetail && (
+                    <div className="overflow-x-auto max-h-64 border-t-2 border-amber-200">
+                      <table className="w-full text-left text-xs">
+                        <thead className="bg-amber-100 text-amber-800 font-black text-[10px] uppercase sticky top-0">
+                          <tr>
+                            <th className="py-2 px-3">Baris Excel</th>
+                            <th className="py-2 px-3">NIK</th>
+                            <th className="py-2 px-3">Nama</th>
+                            <th className="py-2 px-3">Alasan Dilewati</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-amber-100">
+                          {skippedDetailRows.map((r, idx) => (
+                            <tr key={idx} className="hover:bg-amber-50">
+                              <td className="py-2 px-3 font-bold text-amber-700">Baris {r.rowNumber}</td>
+                              <td className="py-2 px-3 font-mono text-slate-700">{r.nik}</td>
+                              <td className="py-2 px-3 font-bold text-slate-800 uppercase">{r.nama}</td>
+                              <td className="py-2 px-3 text-amber-700 font-bold">{r.reason}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
-                <div className="bg-white p-3 rounded-2xl border-2 border-[#58CC02]/40">
-                  <span className="text-[10px] font-black uppercase text-[#58CC02] block">Pemilih Baru</span>
-                  <span className="text-lg font-black text-[#58CC02]">+{importResult.inserted.toLocaleString('id-ID')}</span>
-                </div>
-                <div className="bg-white p-3 rounded-2xl border-2 border-[#1CB0F6]/40">
-                  <span className="text-[10px] font-black uppercase text-[#1CB0F6] block">Diperbarui</span>
-                  <span className="text-lg font-black text-[#1CB0F6]">{importResult.updated.toLocaleString('id-ID')}</span>
-                </div>
-                <div className="bg-white p-3 rounded-2xl border-2 border-slate-200">
-                  <span className="text-[10px] font-black uppercase text-slate-500 block">Dilewati</span>
-                  <span className="text-lg font-black text-slate-600">{importResult.skipped.toLocaleString('id-ID')}</span>
-                </div>
-              </div>
-
-              <div className="pt-3">
-                <button
-                  type="button"
-                  onClick={handleFinishAndReload}
-                  className="px-6 py-3 rounded-2xl bg-[#58CC02] hover:bg-[#4ebb02] text-white font-black text-xs uppercase tracking-wider border-b-4 border-[#46A302] active:border-b-0 active:translate-y-1 transition-all shadow-md cursor-pointer inline-flex items-center gap-2"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>Selesai & Muat Ulang Dashboard</span>
-                </button>
-              </div>
+              )}
             </div>
           ) : (
             <>
@@ -703,11 +826,18 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                 <div className="space-y-4">
                   {/* Statistik Data Terdeteksi */}
                   <div className="flex flex-wrap items-center justify-between gap-3 bg-white border-2 border-slate-200 rounded-2xl p-4">
-                    <div className="flex items-center gap-2">
-                      <span className="w-3 h-3 rounded-full bg-[#58CC02] animate-pulse"></span>
-                      <span className="text-xs font-black text-slate-800">
-                        {parsedRows.length.toLocaleString('id-ID')} Baris Pemilih Ditemukan
-                      </span>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-full bg-[#58CC02] animate-pulse"></span>
+                        <span className="text-xs font-black text-slate-800">
+                          {parsedRows.filter(r => r._isValidNik).length.toLocaleString('id-ID')} NIK Valid siap diimpor
+                        </span>
+                      </div>
+                      {skippedInParsing.length > 0 && (
+                        <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-lg text-[10px] font-black">
+                          ⚠ {skippedInParsing.length} baris bermasalah
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -721,6 +851,47 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                       </button>
                     </div>
                   </div>
+
+                  {/* Warning Panel Baris Bermasalah saat Parsing */}
+                  {showSkippedWarning && skippedInParsing.length > 0 && (
+                    <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setShowSkippedWarning(!showSkippedWarning)}
+                        className="w-full flex items-center justify-between p-3 text-left cursor-pointer hover:bg-amber-100 transition"
+                      >
+                        <div className="flex items-center gap-2 text-amber-700">
+                          <AlertTriangle className="w-4 h-4 shrink-0" />
+                          <span className="text-xs font-black">
+                            ⚠ {skippedInParsing.length} baris dari file ini akan dilewati (tidak diimport) — klik untuk lihat alasan
+                          </span>
+                        </div>
+                        <span className="text-xs font-black text-amber-600 shrink-0">{showSkippedWarning ? '▲' : '▼'}</span>
+                      </button>
+                      <div className="overflow-x-auto max-h-48 border-t-2 border-amber-200">
+                        <table className="w-full text-left text-xs">
+                          <thead className="bg-amber-100 text-amber-800 font-black text-[10px] uppercase sticky top-0">
+                            <tr>
+                              <th className="py-2 px-3">Baris Excel</th>
+                              <th className="py-2 px-3">NIK Terdeteksi</th>
+                              <th className="py-2 px-3">Nama</th>
+                              <th className="py-2 px-3">Alasan Dilewati</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-amber-100">
+                            {skippedInParsing.map((r, idx) => (
+                              <tr key={idx} className="hover:bg-amber-50">
+                                <td className="py-2 px-3 font-bold text-amber-700">Baris {r.rowNumber}</td>
+                                <td className="py-2 px-3 font-mono text-slate-600">{r.nik}</td>
+                                <td className="py-2 px-3 font-bold text-slate-800 uppercase">{r.nama}</td>
+                                <td className="py-2 px-3 text-amber-700 font-bold">{r.reason}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Tabel Preview Baris Pertama */}
                   {showPreview && (

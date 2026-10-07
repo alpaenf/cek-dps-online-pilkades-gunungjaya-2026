@@ -102,7 +102,7 @@ class AdminVoterController extends Controller
      */
     public function downloadTemplate(): StreamedResponse
     {
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('DPS Pilkades 2026');
 
@@ -186,9 +186,9 @@ class AdminVoterController extends Controller
                 $colLetter = Coordinate::stringFromColumnIndex($colIdx + 1);
                 if ($colIdx === 2) {
                     // Set NIK eksplisit sebagai string agar 16 digit tidak menjadi notasi ilmiah (3.32E+15)
-                    $sheet->setCellValueExplicit($colLetter . $rowIdx, (string)$val, DataType::TYPE_STRING);
+                    $sheet->setCellValueExplicit($colLetter.$rowIdx, (string) $val, DataType::TYPE_STRING);
                 } else {
-                    $sheet->setCellValue($colLetter . $rowIdx, $val);
+                    $sheet->setCellValue($colLetter.$rowIdx, $val);
                 }
             }
 
@@ -229,7 +229,7 @@ class AdminVoterController extends Controller
         $updateExisting = (bool) $request->input('update_existing', true);
         $resetFirst = (bool) $request->input('reset_first', false);
 
-        if (empty($votersData) || !is_array($votersData)) {
+        if (empty($votersData) || ! is_array($votersData)) {
             return response()->json(['success' => false, 'message' => 'Tidak ada data pemilih yang dikirim.'], 400);
         }
 
@@ -242,11 +242,25 @@ class AdminVoterController extends Controller
             $inserted = 0;
             $updated = 0;
             $skipped = 0;
+            $skippedRows = [];
 
-            foreach ($votersData as $item) {
-                $normalized = $this->normalizeVoterRow((array)$item);
-                if (!$normalized) {
+            foreach ($votersData as $index => $item) {
+                $normalized = $this->normalizeVoterRow((array) $item);
+                if (! $normalized) {
                     $skipped++;
+                    // Catat alasan skip
+                    $rawNik = preg_replace('/\D/', '', (string) ($item['nik'] ?? ''));
+                    $nama = trim((string) ($item['nama'] ?? $item['nama_pemilih'] ?? ''));
+                    $reason = empty($nama) ? 'Nama pemilih kosong' : (strlen($rawNik) !== 16
+                        ? (empty($rawNik) ? 'NIK kosong' : "NIK tidak valid — {$rawNik} ({$rawNik} = ".strlen($rawNik).' digit, harus 16)')
+                        : 'Data tidak memenuhi syarat');
+                    $skippedRows[] = [
+                        'rowNumber' => $index + 1,
+                        'nik' => $rawNik ?: '(kosong)',
+                        'nama' => $nama ?: '(kosong)',
+                        'reason' => $reason,
+                    ];
+
                     continue;
                 }
 
@@ -257,6 +271,12 @@ class AdminVoterController extends Controller
                         $updated++;
                     } else {
                         $skipped++;
+                        $skippedRows[] = [
+                            'rowNumber' => $index + 1,
+                            'nik' => $normalized['nik'],
+                            'nama' => $normalized['nama'],
+                            'reason' => 'NIK sudah ada di database & opsi update dinonaktifkan',
+                        ];
                     }
                 } else {
                     Voter::create($normalized);
@@ -272,12 +292,14 @@ class AdminVoterController extends Controller
                 'updated' => $updated,
                 'skipped' => $skipped,
                 'total' => count($votersData),
+                'skipped_rows' => $skippedRows,
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage(),
+                'message' => 'Terjadi kesalahan saat menyimpan data: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -345,8 +367,9 @@ class AdminVoterController extends Controller
                 }
 
                 $normalized = $this->normalizeVoterRow($mappedRow);
-                if (!$normalized) {
+                if (! $normalized) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -366,10 +389,11 @@ class AdminVoterController extends Controller
 
             DB::commit();
 
-            return redirect()->back()->with('success', "Import Excel Berhasil! {$inserted} data pemilih baru ditambahkan, {$updated} diperbarui" . ($skipped > 0 ? ", {$skipped} dilewati." : "."));
+            return redirect()->back()->with('success', "Import Excel Berhasil! {$inserted} data pemilih baru ditambahkan, {$updated} diperbarui".($skipped > 0 ? ", {$skipped} dilewati." : '.'));
         } catch (\Throwable $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal memproses file Excel: ' . $e->getMessage());
+
+            return redirect()->back()->with('error', 'Gagal memproses file Excel: '.$e->getMessage());
         }
     }
 
@@ -381,8 +405,8 @@ class AdminVoterController extends Controller
         // 1. Ambil NIK
         $nik = null;
         foreach (['nik', 'no_nik', 'nomor_induk_kependudukan', 'nik_pemilih'] as $k) {
-            if (!empty($row[$k])) {
-                $nik = preg_replace('/\D/', '', (string)$row[$k]);
+            if (! empty($row[$k])) {
+                $nik = preg_replace('/\D/', '', (string) $row[$k]);
                 break;
             }
         }
@@ -393,8 +417,8 @@ class AdminVoterController extends Controller
         // 2. Nama Pemilih
         $nama = '';
         foreach (['nama_pemilih', 'nama', 'nama_lengkap', 'namapemilih'] as $k) {
-            if (!empty($row[$k])) {
-                $nama = trim((string)$row[$k]);
+            if (! empty($row[$k])) {
+                $nama = trim((string) $row[$k]);
                 break;
             }
         }
@@ -403,7 +427,7 @@ class AdminVoterController extends Controller
         }
 
         // 3. Jenis Kelamin
-        $jkRaw = strtoupper(trim((string)($row['jenis_kelamin'] ?? $row['jk'] ?? '')));
+        $jkRaw = strtoupper(trim((string) ($row['jenis_kelamin'] ?? $row['jk'] ?? '')));
         $jk = str_starts_with($jkRaw, 'P') ? 'P' : 'L';
 
         // 4. Tanggal Lahir
@@ -411,28 +435,28 @@ class AdminVoterController extends Controller
         $tglLahir = $this->parseDateValue($tglRaw);
 
         // 5. Tempat Lahir
-        $tempatLahir = trim((string)($row['tempat'] ?? $row['tempat_lahir'] ?? ''));
+        $tempatLahir = trim((string) ($row['tempat'] ?? $row['tempat_lahir'] ?? ''));
 
         // 6. Alamat Dusun, RT, RW
-        $dusun = trim((string)($row['dusun'] ?? $row['dukuh'] ?? ''));
-        $rt = trim((string)($row['rt'] ?? ''));
-        $rw = trim((string)($row['rw'] ?? ''));
+        $dusun = trim((string) ($row['dusun'] ?? $row['dukuh'] ?? ''));
+        $rt = trim((string) ($row['rt'] ?? ''));
+        $rw = trim((string) ($row['rw'] ?? ''));
 
         // 7. No Urut DPT
         $noUrut = null;
         foreach (['no_dpt', 'no', 'no_urut', 'nomor_dpt', 'nodpt'] as $k) {
             if (isset($row[$k]) && is_numeric($row[$k])) {
-                $noUrut = (int)$row[$k];
+                $noUrut = (int) $row[$k];
                 break;
             }
         }
 
         // 8. Lokasi TPS
-        $tpsRaw = trim((string)($row['tps'] ?? $row['nomor_tps'] ?? ''));
+        $tpsRaw = trim((string) ($row['tps'] ?? $row['nomor_tps'] ?? ''));
         $tpsId = $this->resolveTpsId($tpsRaw, $dusun);
 
         // 9. Status Pemilih
-        $statusRaw = strtoupper(trim((string)($row['status'] ?? '')));
+        $statusRaw = strtoupper(trim((string) ($row['status'] ?? '')));
         $status = 'DPS';
         if (in_array($statusRaw, ['DPS', 'DPT', 'DPTB', 'DPK', 'TMS'])) {
             $status = $statusRaw === 'DPTB' ? 'DPTb' : $statusRaw;
@@ -440,19 +464,25 @@ class AdminVoterController extends Controller
 
         // 10. Keterangan
         $ketParts = [];
-        if (!empty($row['ket'])) {
-            $ketParts[] = trim((string)$row['ket']);
+        if (! empty($row['ket'])) {
+            $ketParts[] = trim((string) $row['ket']);
         }
-        if (!empty($row['keterangan']) && !in_array(trim((string)$row['keterangan']), $ketParts)) {
-            $ketParts[] = trim((string)$row['keterangan']);
+        if (! empty($row['keterangan']) && ! in_array(trim((string) $row['keterangan']), $ketParts)) {
+            $ketParts[] = trim((string) $row['keterangan']);
         }
         $keterangan = implode(' - ', $ketParts);
 
         // Bentuk alamat lengkap
         $alamatParts = [];
-        if ($dusun) $alamatParts[] = $dusun;
-        if ($rt) $alamatParts[] = "RT " . str_pad($rt, 3, '0', STR_PAD_LEFT);
-        if ($rw) $alamatParts[] = "RW " . str_pad($rw, 3, '0', STR_PAD_LEFT);
+        if ($dusun) {
+            $alamatParts[] = $dusun;
+        }
+        if ($rt) {
+            $alamatParts[] = 'RT '.str_pad($rt, 3, '0', STR_PAD_LEFT);
+        }
+        if ($rw) {
+            $alamatParts[] = 'RW '.str_pad($rw, 3, '0', STR_PAD_LEFT);
+        }
         $alamat = implode(', ', $alamatParts);
 
         return [
@@ -479,18 +509,20 @@ class AdminVoterController extends Controller
     {
         if (empty($tpsRaw)) {
             $first = Tps::first();
+
             return $first ? $first->id : null;
         }
 
         $num = (int) preg_replace('/\D/', '', $tpsRaw);
         if ($num <= 0) {
             $first = Tps::first();
+
             return $first ? $first->id : null;
         }
 
-        $formattedNum = (string)$num;
+        $formattedNum = (string) $num;
         $tpsName = "TPS {$num}";
-        $padName = "TPS " . str_pad($formattedNum, 2, '0', STR_PAD_LEFT);
+        $padName = 'TPS '.str_pad($formattedNum, 2, '0', STR_PAD_LEFT);
         $pad3 = str_pad($formattedNum, 3, '0', STR_PAD_LEFT);
 
         $tps = Tps::where('nomor_tps', $tpsName)
@@ -519,20 +551,24 @@ class AdminVoterController extends Controller
      */
     private function parseDateValue($val): ?string
     {
-        if (empty($val)) return null;
+        if (empty($val)) {
+            return null;
+        }
 
         // Tanggal berupa serial angka Excel (misal: 28526)
         if (is_numeric($val) && $val > 1000) {
             try {
-                return Date::excelToDateTimeObject((int)$val)->format('Y-m-d');
-            } catch (\Throwable $e) {}
+                return Date::excelToDateTimeObject((int) $val)->format('Y-m-d');
+            } catch (\Throwable $e) {
+            }
         }
 
-        $val = trim((string)$val);
+        $val = trim((string) $val);
         foreach (['d-m-Y', 'd/m/Y', 'Y-m-d', 'Y/m/d', 'd.m.Y'] as $fmt) {
             try {
                 return Carbon::createFromFormat($fmt, $val)->format('Y-m-d');
-            } catch (\Throwable $e) {}
+            } catch (\Throwable $e) {
+            }
         }
 
         try {
@@ -549,7 +585,7 @@ class AdminVoterController extends Controller
     {
         for ($i = 0; $i < min(15, count($rows)); $i++) {
             $upperRow = array_map(function ($val) {
-                return strtoupper(trim((string)$val));
+                return strtoupper(trim((string) $val));
             }, $rows[$i]);
 
             foreach ($upperRow as $cell) {
@@ -558,6 +594,7 @@ class AdminVoterController extends Controller
                 }
             }
         }
+
         return -1;
     }
 
@@ -571,8 +608,8 @@ class AdminVoterController extends Controller
 
         $keys = [];
         foreach ($mainHeader as $idx => $mainVal) {
-            $m = strtolower(trim((string)$mainVal));
-            $s = isset($subHeader[$idx]) ? strtolower(trim((string)$subHeader[$idx])) : '';
+            $m = strtolower(trim((string) $mainVal));
+            $s = isset($subHeader[$idx]) ? strtolower(trim((string) $subHeader[$idx])) : '';
 
             if ($s === 'tempat' || $s === 'tempat lahir') {
                 $keys[$idx] = 'tempat';
@@ -603,11 +640,10 @@ class AdminVoterController extends Controller
             } elseif ($m === 'ket') {
                 $keys[$idx] = 'ket';
             } else {
-                $keys[$idx] = $s ?: ($m ?: 'col_' . $idx);
+                $keys[$idx] = $s ?: ($m ?: 'col_'.$idx);
             }
         }
 
         return $keys;
     }
 }
-
