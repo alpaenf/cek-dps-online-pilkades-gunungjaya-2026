@@ -51,6 +51,11 @@ export default function Home({
   useEffect(() => {
     try {
       localStorage.removeItem('pilkades_custom_dps_recap');
+      const storedMascot = localStorage.getItem('pilkades_custom_mascot');
+      if (storedMascot && (storedMascot.includes('mascot_glawu_transparent') || storedMascot.includes('mascot_guide_transparent') || storedMascot.includes('mascot_glawu_png') || storedMascot.includes('mascot_glawu_1790262373859'))) {
+        localStorage.removeItem('pilkades_custom_mascot');
+        setMascotSrc(DEFAULT_MASCOT_GLAWU);
+      }
     } catch {}
   }, []);
 

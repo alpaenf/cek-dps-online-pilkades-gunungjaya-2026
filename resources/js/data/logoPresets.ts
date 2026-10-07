@@ -3,9 +3,9 @@ import emblemLogo from '../assets/images/logo_gunungjaya_emblem_1790176273103.jp
 import modernLogo from '../assets/images/logo_gunungjaya_modern_1790176291329.jpg';
 import logoPilkadesPng from '../assets/images/logo_pilkades_transparent.png';
 import watermarkBg from '../assets/images/watermark_bg_1790261819824.jpg';
-import mascotGlawu from '../assets/images/mascot_glawu_transparent.png';
-import mascotGlawuPng from '../assets/images/mascot_glawu_transparent.png';
-import mascotGlawuGuide from '../assets/images/mascot_guide_transparent.png';
+import mascotGlawu from '../assets/images/newmaskot.png';
+import mascotGlawuPng from '../assets/images/newmaskot.png';
+import mascotGlawuGuide from '../assets/images/newmaskot.png';
 import bannerDark from '../assets/images/banner_pilkades_dark_1790263339981.jpg';
 import bgGlossyBlack from '../assets/images/bg_glossy_black_1790263356111.jpg';
 

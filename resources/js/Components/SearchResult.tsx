@@ -259,7 +259,7 @@ export const SearchResult: React.FC<SearchResultProps> = ({
               <div className="p-4 rounded-2xl bg-[#DDF4FF] border-2 border-[#1CB0F6]/40 flex items-center gap-4">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center">
                   <img
-                    src={DEFAULT_MASCOT_GLAWU_GUIDE}
+                    src={mascotSrc || DEFAULT_MASCOT_GLAWU}
                     alt="GLAWU Panduan"
                     className="w-full h-full object-contain"
                   />

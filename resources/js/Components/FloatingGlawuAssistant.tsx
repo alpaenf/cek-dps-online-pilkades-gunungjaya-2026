@@ -38,7 +38,7 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
             <div className="flex items-center gap-3">
               <div className="relative w-12 h-12 rounded-full overflow-hidden bg-slate-900 border-2 border-amber-400/50 p-0.5 shrink-0 shadow-md">
                 <img
-                  src={mascotSrc || DEFAULT_MASCOT_GLAWU_GUIDE}
+                  src={mascotSrc || DEFAULT_MASCOT_GLAWU}
                   alt="GLAWU"
                   className="w-full h-full object-contain"
                 />
