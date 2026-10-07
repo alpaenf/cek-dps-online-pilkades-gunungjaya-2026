@@ -102,7 +102,12 @@ if [ -d ".git" ]; then
     # Pastikan remote origin mengarah ke repository yang sesuai
     git remote set-url origin "$REPO_URL" 2>/dev/null || true
     git fetch origin "$BRANCH" 2>/dev/null || true
-    git pull origin "$BRANCH" || echo "   ⚠️ Peringatan: git pull gagal atau ada perubahan lokal. Melanjutkan dengan file saat ini."
+    # Simpan perubahan lokal jika ada agar tidak menggagalkan pull
+    git stash 2>/dev/null || true
+    if ! git pull origin "$BRANCH"; then
+        echo "   ⚠️ Terjadi konflik lokal, menyinkronkan paksa ke origin/$BRANCH..."
+        git reset --hard "origin/$BRANCH" || true
+    fi
 else
     echo "   ℹ️ Inisialisasi Git remote ke $REPO_URL..."
     git init
@@ -116,7 +121,8 @@ fi
 # ------------------------------------------------------------------------------
 echo "📦 [4/8] Menginstall dependensi Composer (PHP)..."
 if command -v $COMPOSER_BIN >/dev/null 2>&1; then
-    $COMPOSER_BIN install --no-dev --prefer-dist --optimize-autoloader --no-interaction
+    $COMPOSER_BIN install --no-dev --prefer-dist --optimize-autoloader --no-interaction --ignore-platform-req=ext-fileinfo || \
+    $COMPOSER_BIN install --no-dev --prefer-dist --optimize-autoloader --no-interaction --ignore-platform-reqs
 else
     echo "   ⚠️ $COMPOSER_BIN tidak ditemukan di PATH sistem. Melewati composer install."
 fi
