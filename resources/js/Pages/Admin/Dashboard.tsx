@@ -298,65 +298,65 @@ export default function AdminDashboard({
       <Head title="Panel Administrasi Pilkades Gunungjaya 2026" />
 
       {/* Top Navbar */}
-      <header className="sticky top-0 z-40 bg-white border-b-2 border-slate-200 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
+      <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-2 border-slate-200 shadow-2xs">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-12 sm:h-14">
             {/* Logo & Portal Identity */}
-            <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0 mr-2">
+              <div className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0">
                 <img
                   src={DEFAULT_VILLAGE_LOGO}
                   alt="Logo Pilkades Gunungjaya"
                   className="w-full h-full object-contain"
                 />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#1CB0F6] bg-[#DDF4FF] px-2 py-0.5 rounded-lg border border-[#1CB0F6]/30">
-                    PANEL ADMINISTRATOR
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 leading-none">
+                  <span className="text-[8px] sm:text-[9px] font-black uppercase tracking-wider text-[#1CB0F6] bg-[#DDF4FF] px-1.5 py-0.5 rounded-md border border-[#1CB0F6]/30 leading-none shrink-0">
+                    PANEL ADMIN
                   </span>
-                  <span className="text-[10px] font-black uppercase tracking-wider text-[#58CC02] bg-[#E5F9D2] px-2 py-0.5 rounded-lg border border-[#58CC02]/30">
-                    ROLE ADMIN
+                  <span className="hidden xs:inline-flex text-[8px] sm:text-[9px] font-bold uppercase tracking-wider text-[#58CC02] bg-[#E5F9D2] px-1.5 py-0.5 rounded-md border border-[#58CC02]/30 leading-none shrink-0">
+                    PILKADES 2026
                   </span>
                 </div>
-                <h1 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-tight">
+                <h1 className="text-[11px] sm:text-sm font-black text-slate-900 tracking-tight leading-tight truncate mt-0.5">
                   P2KD DESA GUNUNGJAYA 2026
                 </h1>
-                <p className="text-xs font-semibold text-slate-500">
+                <p className="hidden md:block text-[11px] font-semibold text-slate-500 truncate leading-none mt-0.5">
                   Kelola Data Lokasi TPS & Daftar Pemilih Sementara (DPS)
                 </p>
               </div>
             </div>
 
             {/* Actions: View Public & Logout */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <Link
                 href={route('admin.profile.edit')}
-                className="px-3.5 py-2 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-black text-xs uppercase tracking-wider border-2 border-b-4 border-slate-200 hover:border-slate-300 transition-all flex items-center gap-1.5 cursor-pointer"
+                className="h-8 sm:h-9 px-2 sm:px-3 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-black text-xs uppercase tracking-wider border border-b-2 sm:border-2 sm:border-b-3 border-slate-200 hover:border-slate-300 active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-2xs"
                 title="Pengaturan Profil, WhatsApp & Password"
               >
-                <User className="w-4 h-4 text-[#58CC02]" />
-                <span className="hidden sm:inline">Profil & Kontak</span>
+                <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#58CC02]" />
+                <span className="hidden sm:inline">Profil</span>
               </Link>
 
               <Link
                 href="/"
                 target="_blank"
-                className="px-3.5 py-2 rounded-2xl bg-white hover:bg-slate-50 text-slate-700 font-black text-xs uppercase tracking-wider border-2 border-b-4 border-slate-200 hover:border-slate-300 transition-all flex items-center gap-1.5 cursor-pointer"
+                className="h-8 sm:h-9 px-2 sm:px-3 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-black text-xs uppercase tracking-wider border border-b-2 sm:border-2 sm:border-b-3 border-slate-200 hover:border-slate-300 active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-2xs"
                 title="Buka Website Publik Cek DPS"
               >
-                <ExternalLink className="w-4 h-4 text-[#1CB0F6]" />
-                <span className="hidden sm:inline">Lihat Portal Warga</span>
+                <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#1CB0F6]" />
+                <span className="hidden sm:inline">Portal</span>
               </Link>
 
               <button
                 type="button"
                 onClick={() => router.post(route('logout'))}
-                className="px-3.5 py-2 rounded-2xl bg-[#FF4B4B] hover:bg-[#e03d3d] text-white font-black text-xs uppercase tracking-wider border-b-4 border-[#EA2B2B] active:border-b-0 active:translate-y-1 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                className="h-8 sm:h-9 px-2 sm:px-3 rounded-xl bg-[#FF4B4B] hover:bg-[#e03d3d] text-white font-black text-xs uppercase tracking-wider border-b-2 sm:border-b-3 border-[#EA2B2B] active:border-b-0 active:translate-y-0.5 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0 shadow-2xs"
                 title="Keluar dari sesi administrator"
               >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Logout</span>
+                <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Keluar</span>
               </button>
             </div>
           </div>
@@ -364,7 +364,7 @@ export default function AdminDashboard({
       </header>
 
       {/* Main Content Container */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 space-y-6">
         
         {/* Flash Notifications */}
         {flash?.success && (

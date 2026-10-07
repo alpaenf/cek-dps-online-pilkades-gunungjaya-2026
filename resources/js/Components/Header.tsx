@@ -33,9 +33,9 @@ export const Header: React.FC<HeaderProps> = ({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-white border-b-2 border-slate-200 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b-2 border-slate-200 shadow-2xs">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-13 sm:h-16">
           {/* Brand Logo & Title */}
           <div className="flex items-center gap-2 sm:gap-3">
             <div
@@ -195,10 +195,10 @@ export const Header: React.FC<HeaderProps> = ({
             )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2.5 rounded-2xl text-slate-700 hover:bg-slate-100 border-2 border-slate-200 cursor-pointer"
+              className="p-2 rounded-xl text-slate-700 hover:bg-slate-100 border-2 border-slate-200 cursor-pointer"
               aria-label="Buka Menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
