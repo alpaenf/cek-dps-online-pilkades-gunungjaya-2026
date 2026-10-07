@@ -89,38 +89,32 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
   };
 
   return (
-    <section id="hero-cek-dpt" className="relative py-8 sm:py-12 bg-[#F7F9FA] text-slate-800">
-      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <section id="hero-cek-dpt" className="relative py-6 sm:py-10 bg-[#F7F9FA] text-slate-800">
+      <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
         
         {/* Showcase Header: Maskot GLAWU & Speech Bubble */}
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 lg:gap-8 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 sm:gap-8 items-center">
           
           {/* Kolom Kiri: Maskot GLAWU */}
           <div className="md:col-span-5 flex flex-col items-center justify-center relative">
-            <div
-              onClick={isAdmin && onOpenMascotModal ? onOpenMascotModal : undefined}
-              className={`relative flex items-center justify-center ${
-                isAdmin && onOpenMascotModal ? 'group cursor-pointer' : ''
-              }`}
-              title={isAdmin ? 'Ganti Maskot' : 'Maskot Resmi: GLAWU'}
-            >
+            <div className="relative flex flex-col items-center justify-center">
               <img
                 src={mascotSrc || DEFAULT_MASCOT_GLAWU}
                 alt="Maskot Pilkades: GLAWU"
-                className="w-48 sm:w-56 md:w-64 max-h-[300px] object-contain select-none transition-transform duration-200 hover:scale-105"
+                width={520}
+                height={780}
+                loading="eager"
+                decoding="async"
+                className="w-36 sm:w-48 md:w-60 max-h-[190px] sm:max-h-[240px] md:max-h-[300px] object-contain select-none transition-transform duration-200 hover:scale-105 drop-shadow-md"
               />
 
-              {isAdmin && onOpenMascotModal && (
-                <div className="absolute bottom-2 right-2 bg-[#FFC800] hover:bg-[#e6b400] text-amber-950 px-3 py-1 rounded-xl border-b-2 border-[#E59B00] text-xs font-black flex items-center gap-1.5 shadow-sm">
-                  <Edit3 className="w-3.5 h-3.5" />
-                  <span>Ubah Maskot</span>
-                </div>
-              )}
+              {/* Subtle ground shadow to anchor the mascot */}
+              <div className="w-24 sm:w-36 h-3 bg-slate-400/25 rounded-full blur-[2px] -mt-1" />
             </div>
           </div>
 
           {/* Kolom Kanan: Speech Bubble & Keterangan */}
-          <div className="md:col-span-7 space-y-4 text-center md:text-left">
+          <div className="md:col-span-7 space-y-3 sm:space-y-4 text-center md:text-left">
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
               <span className="px-3 py-1 rounded-xl bg-[#E5F9D2] text-[#46A302] border-2 border-[#58CC02] text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5" />
@@ -131,20 +125,20 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
               </span>
             </div>
 
-            <div className="relative bg-white border-2 border-b-4 border-slate-200 rounded-3xl p-5 sm:p-6 shadow-sm">
-              <h2 className="text-lg sm:text-xl font-black text-slate-900 leading-snug">
+            <div className="relative bg-white border-2 border-b-4 border-slate-200 rounded-3xl p-4 sm:p-6 shadow-xs">
+              <h2 className="text-base sm:text-xl font-black text-slate-900 leading-snug">
                 Sugeng Rawuh Warga Desa Gunungjaya!
               </h2>
-              <p className="text-sm text-slate-600 mt-2 leading-relaxed font-medium">
+              <p className="text-xs sm:text-sm text-slate-600 mt-1.5 sm:mt-2 leading-relaxed font-medium">
                 Saya <strong>GLAWU</strong>, maskot resmi Pilkades Gunungjaya 2026. Masukkan <strong>16 digit NIK</strong> Anda untuk memeriksa hak suara dalam <strong>Daftar Pemilih Sementara (DPS)</strong>.
               </p>
 
-              <div className="mt-4 pt-3 border-t-2 border-slate-100 flex flex-wrap gap-2 justify-center md:justify-start text-xs font-bold text-slate-600">
-                <span className="px-3 py-1 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-1 text-[#46A302]">
+              <div className="mt-3 sm:mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-2 justify-center md:justify-start text-xs font-bold text-slate-600">
+                <span className="px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-1 text-[#46A302] text-[11px] sm:text-xs">
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   Database MySQL Pilkades
                 </span>
-                <span className="px-3 py-1 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-1 text-[#1CB0F6]">
+                <span className="px-2.5 py-1 rounded-xl bg-slate-50 border border-slate-200 flex items-center gap-1 text-[#1CB0F6] text-[11px] sm:text-xs">
                   <ShieldCheck className="w-3.5 h-3.5" />
                   Privasi NIK Terlindungi
                 </span>

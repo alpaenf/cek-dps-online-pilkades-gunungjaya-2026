@@ -85,18 +85,6 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                   className="w-64 sm:w-72 h-64 sm:h-72 object-contain drop-shadow-[0_15px_25px_rgba(0,0,0,0.8)] transition-transform duration-500 group-hover:scale-105"
                 />
 
-                {isAdmin && onOpenMascotModal && (
-                  <button
-                    type="button"
-                    onClick={onOpenMascotModal}
-                    className="absolute top-3 left-3 bg-amber-500 hover:bg-amber-400 text-slate-950 px-2.5 py-1 rounded-xl text-[11px] font-bold shadow-lg flex items-center gap-1.5 transition cursor-pointer z-30"
-                    title="Ubah Gambar Maskot Pilkades"
-                  >
-                    <Edit3 className="w-3 h-3" />
-                    <span>Ubah Gambar Maskot</span>
-                  </button>
-                )}
-
                 {/* Floating Tag */}
                 <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-xs text-amber-300 text-xs font-semibold px-4 py-1.5 rounded-full shadow-md whitespace-nowrap border border-amber-500/40 font-mono">
                   🦅 Burung Khas Lereng Gunung Slamet

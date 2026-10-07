@@ -37,11 +37,8 @@ export const Footer: React.FC<FooterProps> = ({
           <div className="md:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
               <div
-                onClick={isAdmin ? onOpenLogoModal : undefined}
-                className={`w-12 h-12 flex items-center justify-center shrink-0 ${
-                  isAdmin ? 'cursor-pointer hover:scale-105 transition-all' : ''
-                }`}
-                title={isAdmin ? 'Ganti Logo Pilkades' : 'Logo Desa Gunungjaya'}
+                className="w-12 h-12 flex items-center justify-center shrink-0"
+                title="Logo Desa Gunungjaya"
               >
                 <img
                   src={currentLogo}
@@ -94,24 +91,13 @@ export const Footer: React.FC<FooterProps> = ({
               {isAdmin && (
                 <>
                   <li className="pt-2 border-t border-slate-100">
-                    <button
-                      type="button"
-                      onClick={onOpenLogoModal}
-                      className="text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-2 cursor-pointer"
+                    <a
+                      href="/admin/dashboard"
+                      className="text-[#46A302] hover:text-[#58CC02] font-black transition-colors flex items-center gap-2 cursor-pointer"
                     >
-                      <ImageIcon className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Kelola Logo</span>
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      onClick={onOpenSheetGuide}
-                      className="text-[#46A302] hover:text-[#58CC02] transition-colors flex items-center gap-2 cursor-pointer"
-                    >
-                      <FileSpreadsheet className="w-3.5 h-3.5" />
-                      <span>Pengaturan Google Sheets</span>
-                    </button>
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#58CC02]" />
+                      <span>Panel Admin (CRUD TPS & DPS)</span>
+                    </a>
                   </li>
                 </>
               )}
