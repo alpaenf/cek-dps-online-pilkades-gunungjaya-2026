@@ -172,8 +172,14 @@ $PHP_BIN artisan route:cache
 $PHP_BIN artisan view:cache
 $PHP_BIN artisan event:cache 2>/dev/null || true
 
-# Buat symbolic link storage Laravel jika belum ada
-$PHP_BIN artisan storage:link --force 2>/dev/null || true
+# Buat / perbarui symbolic link storage Laravel secara aman
+if [ -L "public/storage" ] && [ -e "public/storage" ]; then
+    echo "   🔗 Symlink public/storage sudah aktif dan valid."
+else
+    rm -rf public/storage
+    $PHP_BIN artisan storage:link >/dev/null 2>&1 || true
+    echo "   🔗 Symlink public/storage berhasil disinkronkan."
+fi
 
 # Pastikan folder writable oleh web server
 chmod -R 775 storage bootstrap/cache 2>/dev/null || true
