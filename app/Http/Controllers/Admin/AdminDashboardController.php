@@ -9,6 +9,7 @@ use App\Models\PendingSkippedVoter;
 use App\Models\Tps;
 use App\Models\Voter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -90,6 +91,8 @@ class AdminDashboardController extends Controller
         }
 
         $mascotSettings = [
+            'mascot_name' => $allSettings['mascot_name'] ?? 'Si Glawu',
+            'mascot_image' => $allSettings['mascot_image'] ?? null,
             'mascot_badge' => $allSettings['mascot_badge'] ?? 'IKON SEMANGAT DEMOKRASI DESA',
             'mascot_tag' => $allSettings['mascot_tag'] ?? 'Burung Khas Lereng Gn. Slamet',
             'mascot_title' => $allSettings['mascot_title'] ?? 'Kenalkan, “GLAWU” Maskot Resmi Pilkades Gunungjaya 2026',
@@ -169,6 +172,9 @@ class AdminDashboardController extends Controller
     public function updateMascotSettings(Request $request)
     {
         $validated = $request->validate([
+            'mascot_name' => 'nullable|string|max:100',
+            'mascot_image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,svg|max:5120',
+            'mascot_image_reset' => 'nullable',
             'mascot_title' => 'required|string|max:255',
             'mascot_badge' => 'nullable|string|max:255',
             'mascot_tag' => 'nullable|string|max:255',
@@ -205,6 +211,29 @@ class AdminDashboardController extends Controller
 
         if (empty($speeches)) {
             $speeches = ['“Sugeng rawuh sedulur sedaya! Aja lali cek DPS-mu ya!”'];
+        }
+
+        // Handle Mascot Name
+        if (isset($validated['mascot_name']) && trim($validated['mascot_name']) !== '') {
+            AppSetting::set('mascot_name', trim($validated['mascot_name']), 'text', 'Nama Panggilan Maskot');
+        }
+
+        // Handle Mascot Image Upload / Reset
+        if ($request->boolean('mascot_image_reset') || $request->input('mascot_image_reset') === '1' || $request->input('mascot_image_reset') === 'true') {
+            $oldImage = AppSetting::get('mascot_image');
+            if ($oldImage && str_starts_with($oldImage, '/storage/')) {
+                $relativePath = str_replace('/storage/', '', $oldImage);
+                Storage::disk('public')->delete($relativePath);
+            }
+            AppSetting::where('key', 'mascot_image')->delete();
+        } elseif ($request->hasFile('mascot_image')) {
+            $oldImage = AppSetting::get('mascot_image');
+            if ($oldImage && str_starts_with($oldImage, '/storage/')) {
+                $relativePath = str_replace('/storage/', '', $oldImage);
+                Storage::disk('public')->delete($relativePath);
+            }
+            $path = $request->file('mascot_image')->store('mascot', 'public');
+            AppSetting::set('mascot_image', '/storage/'.$path, 'image', 'Custom Mascot Image');
         }
 
         AppSetting::set('mascot_title', $validated['mascot_title'], 'text', 'Judul Section Maskot Glawu');

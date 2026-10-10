@@ -154,12 +154,12 @@ export const SearchResult: React.FC<SearchResultProps> = ({
                 </div>
               </div>
 
-              {/* Sapaan Maskot GLAWU */}
+              {/* Sapaan Maskot */}
               <div className="p-4 sm:p-5 rounded-2xl bg-[#E5F9D2]/50 border-2 border-[#58CC02]/30 flex items-center gap-4">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center">
                   <img
                     src={mascotSrc || DEFAULT_MASCOT_GLAWU}
-                    alt="Maskot Glawu"
+                    alt={`Maskot ${config.mascot_name || 'Glawu'}`}
                     className="w-full h-full object-contain"
                   />
                 </div>
@@ -167,7 +167,7 @@ export const SearchResult: React.FC<SearchResultProps> = ({
                   <div className="flex items-center gap-1.5">
                     <span className="px-2.5 py-0.5 rounded-lg bg-[#58CC02] text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
                       <Sparkles className="w-3 h-3" />
-                      Pesan Dari Glawu
+                      Pesan Dari {config.mascot_name || 'Glawu'}
                     </span>
                     <span className="text-xs font-bold text-[#46A302]">Mantap Sedulur!</span>
                   </div>
@@ -278,12 +278,12 @@ export const SearchResult: React.FC<SearchResultProps> = ({
                 </ul>
               </div>
 
-              {/* Panduan Glawu */}
+              {/* Panduan Maskot */}
               <div className="p-4 rounded-2xl bg-[#DDF4FF] border-2 border-[#1CB0F6]/40 flex items-center gap-4">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 flex items-center justify-center">
                   <img
                     src={mascotSrc || DEFAULT_MASCOT_GLAWU}
-                    alt="GLAWU Panduan"
+                    alt={`${config.mascot_name || 'GLAWU'} Panduan`}
                     className="w-full h-full object-contain"
                   />
                 </div>
@@ -291,7 +291,7 @@ export const SearchResult: React.FC<SearchResultProps> = ({
                   <div className="flex items-center gap-1.5">
                     <span className="px-2.5 py-0.5 rounded-lg bg-[#1CB0F6] text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
                       <Info className="w-3 h-3" />
-                      Tips Dari Glawu
+                      Tips Dari {config.mascot_name || 'Glawu'}
                     </span>
                     <span className="text-xs font-bold text-[#1899D6]">Aja Kuwatir!</span>
                   </div>

@@ -174,7 +174,7 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
               <div className="relative rounded-2xl bg-gradient-to-b from-[#F0F9FF] to-[#E0F2FE] p-5 border-2 border-[#BAE6FD] flex flex-col items-center justify-center overflow-hidden">
                 <img
                   src={mascotSrc || DEFAULT_MASCOT_GLAWU}
-                  alt="GLAWU - Maskot Resmi Pilkades Gunungjaya"
+                  alt={`${config.mascot_name || 'GLAWU'} - Maskot Resmi Pilkades ${config.desa || 'Gunungjaya'}`}
                   className="w-56 sm:w-64 h-56 sm:h-64 object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-105 select-none"
                 />
 
@@ -202,7 +202,7 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                       className="text-[11px] font-black text-[#1CB0F6] hover:text-[#1899D6] flex items-center gap-1.5 cursor-pointer uppercase tracking-wider"
                     >
                       <RefreshCw className="w-3.5 h-3.5 text-[#1CB0F6]" />
-                      <span>Ganti Nasehat Glawu</span>
+                      <span>Ganti Nasehat {config.mascot_name || 'Glawu'}</span>
                     </button>
                   </div>
                 </div>
@@ -230,7 +230,7 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                   }`}
                 >
                   <Heart className={`w-4 h-4 ${hasCheered ? 'fill-[#FF4B4B] text-[#FF4B4B]' : ''}`} />
-                  <span>{hasCheered ? 'Dukungan Terkirim!' : 'Dukung Glawu'}</span>
+                  <span>{hasCheered ? 'Dukungan Terkirim!' : `Dukung ${config.mascot_name || 'Glawu'}`}</span>
                 </button>
               </div>
             </div>
@@ -263,7 +263,7 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                 }`}
               >
                 <Megaphone className="w-4 h-4" />
-                <span>4 Ajakan Glawu</span>
+                <span>4 Ajakan {config.mascot_name || 'Glawu'}</span>
               </button>
 
               <button
@@ -289,7 +289,7 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                   </div>
                   <div>
                     <h3 className="text-lg sm:text-xl font-black text-slate-900">
-                      Makna Simbolik Maskot GLAWU
+                      Makna Simbolik Maskot {config.mascot_name || 'GLAWU'}
                     </h3>
                     <p className="text-xs sm:text-sm text-slate-500 font-medium">
                       Representasi jati diri masyarakat Desa {config.desa || 'Gunungjaya'}, Kec. {config.kecamatan || 'Belik'}, Kab. {config.kabupaten || 'Pemalang'}
@@ -317,7 +317,7 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                       SLOGAN PILKADES {config.desa?.toUpperCase() || 'GUNUNGJAYA'} {config.tahun || '2026'}
                     </span>
                     <p className="text-sm sm:text-base font-black text-slate-900 mt-0.5">
-                      {config.mascot_slogan || '“Gunungjaya Guyub Rukun, Sukseskan Pilkades Bersama Glawu!”'}
+                      {config.mascot_slogan || `“${config.desa || 'Gunungjaya'} Guyub Rukun, Sukseskan Pilkades Bersama ${config.mascot_name || 'Glawu'}!”`}
                     </p>
                   </div>
                   <button
@@ -331,7 +331,7 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
               </div>
             )}
 
-            {/* Tab 2: 4 Ajakan Penting Glawu */}
+            {/* Tab 2: 4 Ajakan Penting Maskot */}
             {activeTab === 'pesan' && (
               <div className="bg-white border-2 border-b-4 border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5 animate-in fade-in duration-200">
                 <div className="flex items-center gap-3">
@@ -340,7 +340,7 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                   </div>
                   <div>
                     <h3 className="text-lg sm:text-xl font-black text-slate-900">
-                      4 Ajakan Penting Glawu untuk Pemilih
+                      4 Ajakan Penting {config.mascot_name || 'Glawu'} untuk Pemilih
                     </h3>
                     <p className="text-xs sm:text-sm text-slate-500 font-medium">
                       Pedomani imbauan ini agar hak suaramu terlindungi dengan sah dan sempurna

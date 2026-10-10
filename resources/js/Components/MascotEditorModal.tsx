@@ -48,6 +48,7 @@ export const MascotEditorModal: React.FC<MascotEditorModalProps> = ({
       ];
 
   const { data, setData, post, processing, errors, reset } = useForm({
+    mascot_name: config.mascot_name || 'Si Glawu',
     mascot_title: config.mascot_title || `Kenalkan, “GLAWU” Maskot Resmi Pilkades ${config.desa || 'Gunungjaya'} ${config.tahun || '2026'}`,
     mascot_badge: config.mascot_badge || 'IKON SEMANGAT DEMOKRASI DESA',
     mascot_tag: config.mascot_tag || 'Burung Khas Lereng Gn. Slamet',
@@ -248,6 +249,23 @@ export const MascotEditorModal: React.FC<MascotEditorModalProps> = ({
               {/* TAB 2: Identitas & Slogan */}
               {activeTab === 'identitas' && (
                 <div className="space-y-4 animate-in fade-in duration-150">
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-700">
+                      Nama Panggilan Maskot:
+                    </label>
+                    <input
+                      type="text"
+                      value={data.mascot_name || ''}
+                      onChange={(e) => setData('mascot_name', e.target.value)}
+                      placeholder="Contoh: Si Glawu / Glawu / Si Gatot"
+                      className="w-full px-4 py-2.5 rounded-2xl border-2 border-slate-200 focus:border-[#FFC800] focus:ring-0 text-slate-900 font-bold text-xs"
+                      required
+                    />
+                    <p className="text-[11px] text-slate-500 font-medium">
+                      * Untuk mengganti foto / gambar maskot dengan file baru, silakan buka menu <a href="/admin/dashboard?tab=redaksi" className="text-purple-600 font-bold underline">Pengaturan Redaksi & Maskot di Dashboard Admin</a>.
+                    </p>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="block text-xs font-black uppercase tracking-wider text-slate-700">

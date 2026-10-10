@@ -45,6 +45,8 @@ export interface PilkadesConfig {
   pengumuman: string;
   dataPhase?: string;
   votingHours?: string;
+  mascot_name?: string;
+  mascot_image?: string;
   mascot_title?: string;
   mascot_badge?: string;
   mascot_tag?: string;

@@ -39,7 +39,7 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
               <div className="relative w-12 h-12 rounded-full overflow-hidden bg-slate-900 border-2 border-amber-400/50 p-0.5 shrink-0 shadow-md">
                 <img
                   src={mascotSrc || DEFAULT_MASCOT_GLAWU}
-                  alt="GLAWU"
+                  alt={config.mascot_name || 'GLAWU'}
                   className="w-full h-full object-contain"
                 />
               </div>
@@ -52,11 +52,11 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
                 </div>
                 <h4 className="text-base font-black text-white font-serif flex items-center gap-1.5">
-                  <span>Halo, Aku GLAWU!</span>
+                  <span>Halo, Aku {config.mascot_name || 'GLAWU'}!</span>
                   <Sparkles className="w-4 h-4 text-amber-400" />
                 </h4>
                 <p className="text-[11px] text-slate-300">
-                  Maskot Pilkades Gunungjaya 2026
+                  Maskot Pilkades {config.desa || 'Gunungjaya'} {config.tahun || '2026'}
                 </p>
               </div>
             </div>
@@ -75,7 +75,7 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
           <div className="p-4 sm:p-5 max-h-[70vh] overflow-y-auto space-y-3.5 text-xs">
             <div className="p-3 bg-slate-950/90 rounded-2xl border border-slate-800 text-slate-300 leading-relaxed">
               <p className="font-medium">
-                Ada yang bisa Glawu bantu untuk persiapan Pilkades Gunungjaya? Pilih panduan cepat di bawah ya:
+                Ada yang bisa {config.mascot_name || 'Glawu'} bantu untuk persiapan Pilkades {config.desa || 'Gunungjaya'}? Pilih panduan cepat di bawah ya:
               </p>
             </div>
 
@@ -172,12 +172,12 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
         type="button"
         onClick={handleOpen}
         className="group relative flex items-center gap-2.5 bg-slate-900/90 hover:bg-slate-850 text-white pl-2 pr-4 py-2 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.9)] border-2 border-amber-500/50 hover:border-amber-400 transition-all cursor-pointer transform hover:-translate-y-1 backdrop-blur-md"
-        aria-label="Buka Panduan Glawu"
+        aria-label={`Buka Panduan ${config.mascot_name || 'Glawu'}`}
       >
         <div className="relative w-11 h-11 rounded-full overflow-hidden bg-slate-950 border border-amber-400/40 shadow-inner flex items-center justify-center">
           <img
             src={mascotSrc || DEFAULT_MASCOT_GLAWU}
-            alt="Maskot Glawu"
+            alt={`Maskot ${config.mascot_name || 'Glawu'}`}
             className="w-full h-full object-contain transform group-hover:scale-110 transition-transform"
           />
           {!hasInteracted && (
@@ -188,7 +188,7 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
         <div className="text-left">
           <div className="flex items-center gap-1">
             <span className="text-xs font-black text-amber-300 font-serif">
-              GLAWU
+              {config.mascot_name?.toUpperCase() || 'GLAWU'}
             </span>
             <span className="text-[9px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold px-1.5 py-0.2 rounded-full font-mono">
               Maskot

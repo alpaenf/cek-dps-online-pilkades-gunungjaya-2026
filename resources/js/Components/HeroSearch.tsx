@@ -100,7 +100,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
             <div className="relative flex flex-col items-center justify-center">
               <img
                 src={mascotSrc || DEFAULT_MASCOT_GLAWU}
-                alt="Maskot Pilkades: GLAWU"
+                alt={`Maskot Pilkades: ${config?.mascot_name || 'GLAWU'}`}
                 width={520}
                 height={780}
                 loading="eager"
@@ -127,10 +127,10 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
 
             <div className="relative bg-white border-2 border-b-4 border-slate-200 rounded-3xl p-4 sm:p-6 shadow-xs">
               <h2 className="text-base sm:text-xl font-black text-slate-900 leading-snug">
-                Sugeng Rawuh Warga Desa Gunungjaya!
+                Sugeng Rawuh Warga Desa {config?.desa || 'Gunungjaya'}!
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 mt-1.5 sm:mt-2 leading-relaxed font-medium">
-                Saya <strong>GLAWU</strong>, maskot resmi Pilkades Gunungjaya 2026. Masukkan <strong>16 digit NIK</strong> Anda untuk memeriksa hak suara dalam <strong>Daftar Pemilih Sementara (DPS)</strong>.
+                Saya <strong>{config?.mascot_name || 'GLAWU'}</strong>, maskot resmi Pilkades {config?.desa || 'Gunungjaya'} {config?.tahun || '2026'}. Masukkan <strong>16 digit NIK</strong> Anda untuk memeriksa hak suara dalam <strong>Daftar Pemilih Sementara ({config?.dataPhase || 'DPS'})</strong>.
               </p>
 
               <div className="mt-3 sm:mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-2 justify-center md:justify-start text-xs font-bold text-slate-600">

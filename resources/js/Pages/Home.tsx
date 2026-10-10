@@ -13,6 +13,7 @@ import { WatermarkBackground } from '@/Components/WatermarkBackground';
 import { Footer } from '@/Components/Footer';
 import { MascotGlawuSection } from '@/Components/MascotGlawuSection';
 import { MascotEditorModal } from '@/Components/MascotEditorModal';
+import { FloatingGlawuAssistant } from '@/Components/FloatingGlawuAssistant';
 import { DEFAULT_CONFIG, DEFAULT_TPS_LIST, executeDptCheck } from '@/data/mockDatabase';
 import { DEFAULT_VILLAGE_LOGO, DEFAULT_MASCOT_GLAWU } from '@/data/logoPresets';
 import { DptPublicResult, PilkadesConfig, TpsItem, DpsRecapData } from '@/types/pilkades';
@@ -43,6 +44,12 @@ export default function Home({
   const [recapData, setRecapData] = useState<DpsRecapData>(initialRecapData || DEFAULT_DPS_RECAP);
 
   useEffect(() => {
+    if (initialConfig) {
+      setConfig(initialConfig);
+    }
+  }, [initialConfig]);
+
+  useEffect(() => {
     if (initialRecapData) {
       setRecapData(initialRecapData);
     }
@@ -62,7 +69,7 @@ export default function Home({
   const [isMascotModalOpen, setIsMascotModalOpen] = useState(false);
 
   // Maskot & Logo Pilkades
-  const mascotSrc = DEFAULT_MASCOT_GLAWU;
+  const mascotSrc = config.mascot_image || DEFAULT_MASCOT_GLAWU;
   const currentLogo = DEFAULT_VILLAGE_LOGO;
 
   // Google Sheets Apps Script URL
@@ -152,7 +159,7 @@ export default function Home({
       <Head>
         <title>{`Cek DPS Online - ${config.nama_kegiatan} | Desa ${config.desa}`}</title>
         <meta name="description" content={`Layanan Resmi Pengecekan Daftar Pemilih Sementara (DPS) & DPT Pemilihan Kepala Desa ${config.desa} Tahun ${config.tahun}.`} />
-        <link rel="preload" as="image" href={DEFAULT_MASCOT_GLAWU} type="image/webp" />
+        <link rel="preload" as="image" href={mascotSrc} />
       </Head>
 
       {/* Duolingo Splash Screen saat user buka web */}
@@ -289,6 +296,30 @@ export default function Home({
         onClose={() => setIsMascotModalOpen(false)}
         config={config}
         isAdmin={isAdmin}
+      />
+
+      {/* Floating Mascot Assistant */}
+      <FloatingGlawuAssistant
+        config={config}
+        mascotSrc={mascotSrc}
+        onScrollToSearch={() => {
+          handleSwitchPage('cek-dps');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          const nikInput = document.getElementById('nik-input');
+          if (nikInput) {
+            nikInput.focus();
+          }
+        }}
+        onScrollToTps={() => handleSwitchPage('informasi-tps')}
+        onScrollToContact={() => {
+          const footer = document.querySelector('footer');
+          footer?.scrollIntoView({ behavior: 'smooth' });
+        }}
+        onScrollToMascot={() => {
+          handleSwitchPage('cek-dps');
+          const mascotSection = document.getElementById('maskot');
+          mascotSection?.scrollIntoView({ behavior: 'smooth' });
+        }}
       />
     </div>
   );

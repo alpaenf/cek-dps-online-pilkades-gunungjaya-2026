@@ -34,6 +34,8 @@ class DpsSearchController extends Controller
             'pengumuman' => $settings['pengumuman'] ?? 'Pengecekan DPS Online telah dibuka. Pastikan NIK Anda terdaftar!',
             'dataPhase' => $settings['data_phase'] ?? 'DPS',
             'votingHours' => $settings['voting_hours'] ?? '07.00 - 13.00 WIB',
+            'mascot_name' => $settings['mascot_name'] ?? 'Si Glawu',
+            'mascot_image' => $settings['mascot_image'] ?? null,
             'mascot_badge' => $settings['mascot_badge'] ?? 'IKON SEMANGAT DEMOKRASI DESA',
             'mascot_tag' => $settings['mascot_tag'] ?? 'Burung Khas Lereng Gn. Slamet',
             'mascot_title' => $settings['mascot_title'] ?? 'Kenalkan, “GLAWU” Maskot Resmi Pilkades Gunungjaya 2026',
