@@ -26,7 +26,8 @@ import {
   UserPlus,
   Sparkles,
   Copy,
-  Search
+  Search,
+  Layers
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -45,6 +46,7 @@ interface ImportVoterModalProps {
 
 interface ParsedVoterRow {
   rowNumber: number;
+  sheetName?: string;
   no_dpt?: string | number;
   no_urut?: string | number;
   no?: string | number;
@@ -65,6 +67,7 @@ interface ParsedVoterRow {
 
 interface SkippedRowInfo {
   rowNumber: number;
+  sheetName?: string;
   nik: string;
   nama: string;
   jenis_kelamin?: string;
@@ -81,6 +84,7 @@ interface SkippedRowInfo {
 
 interface DuplicateRowInfo {
   rowNumber: number; // Baris kedua / duplikat di Excel
+  sheetName?: string;
   nik: string;
   nama: string;
   dusun?: string;
@@ -91,6 +95,7 @@ interface DuplicateRowInfo {
   tempat_lahir?: string;
   tanggal_lahir?: string;
   firstSeenRowNumber: number; // Baris pertama / asal di Excel
+  firstSeenSheetName?: string;
   firstSeenName: string;
   firstSeenDusun?: string;
   firstSeenRt?: string;
@@ -108,6 +113,20 @@ interface FileStats {
   uniqueVotersCount: number;
   duplicateVotersCount: number;
   invalidVotersCount: number;
+  sheetCount?: number;
+  activeSheetName?: string;
+}
+
+interface ParsedSheetInfo {
+  sheetName: string;
+  totalRows: number;
+  headerRows: number;
+  headers: string[];
+  validVoters: ParsedVoterRow[];
+  skippedVoters: SkippedRowInfo[];
+  duplicateVoters: DuplicateRowInfo[];
+  uniqueVotersCount: number;
+  duplicateVotersCount: number;
 }
 
 export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
@@ -121,6 +140,12 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
   const [headerColumns, setHeaderColumns] = useState<string[]>([]);
   const [parseError, setParseError] = useState<string | null>(null);
   const [fileStats, setFileStats] = useState<FileStats | null>(null);
+
+  // Multi-Sheet Support
+  const [parsedSheets, setParsedSheets] = useState<ParsedSheetInfo[]>([]);
+  const [selectedSheet, setSelectedSheet] = useState<string>('__ALL__');
+  const [globalDuplicates, setGlobalDuplicates] = useState<DuplicateRowInfo[]>([]);
+  const [globalDuplicateCount, setGlobalDuplicateCount] = useState<number>(0);
 
   // Baris yang dilewati saat parsing (di sisi klien)
   const [skippedInParsing, setSkippedInParsing] = useState<SkippedRowInfo[]>([]);
@@ -215,6 +240,10 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
     setEditingRow(null);
     setCorrectionSuccessMsg(null);
     setCorrectionErrorMsg(null);
+    setParsedSheets([]);
+    setSelectedSheet('__ALL__');
+    setGlobalDuplicates([]);
+    setGlobalDuplicateCount(0);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -304,6 +333,86 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
   };
 
   /**
+   * Terapkan pilihan sheet pada UI & statistik
+   */
+  const applySheetView = (
+    sheetKey: string,
+    sheets: ParsedSheetInfo[],
+    globalDupsList: DuplicateRowInfo[],
+    globalDupsCount: number
+  ) => {
+    if (sheets.length === 0) return;
+
+    if (sheetKey === '__ALL__' || sheets.length === 1) {
+      // Tampilkan seluruh sheet digabungkan
+      const allValid: ParsedVoterRow[] = [];
+      const allSkipped: SkippedRowInfo[] = [];
+      let allTotalRows = 0;
+      let allHeaderRows = 0;
+      const allUniqueNiks = new Set<string>();
+
+      for (const s of sheets) {
+        allTotalRows += s.totalRows;
+        allHeaderRows += s.headerRows;
+        allValid.push(...s.validVoters);
+        allSkipped.push(...s.skippedVoters);
+        for (const v of s.validVoters) {
+          allUniqueNiks.add(v.nik);
+        }
+      }
+
+      setValidParsedRows(allValid);
+      setHeaderColumns(sheets[0]?.headers || []);
+      setSkippedInParsing(allSkipped);
+      setDuplicateInParsing(globalDupsList);
+      setAllSkippedRows(allSkipped);
+      setShowSkippedWarning(allSkipped.length > 0);
+
+      const totalVoterCandidates = allValid.length + allSkipped.length;
+      const totalActiveFileRows = totalVoterCandidates + (allHeaderRows > 0 ? allHeaderRows : 1);
+
+      setFileStats({
+        totalRowsInFile: totalActiveFileRows,
+        headerAndTitleRows: allHeaderRows > 0 ? allHeaderRows : 1,
+        emptyOrFooterRows: 0,
+        totalVoterCandidateRows: totalVoterCandidates,
+        validVotersCount: allValid.length,
+        uniqueVotersCount: allUniqueNiks.size,
+        duplicateVotersCount: globalDupsCount,
+        invalidVotersCount: allSkipped.length,
+        sheetCount: sheets.length,
+        activeSheetName: '__ALL__',
+      });
+    } else {
+      // Tampilkan sheet spesifik yang dipilih
+      const targetSheet = sheets.find((s) => s.sheetName === sheetKey) || sheets[0];
+
+      setValidParsedRows(targetSheet.validVoters);
+      setHeaderColumns(targetSheet.headers);
+      setSkippedInParsing(targetSheet.skippedVoters);
+      setDuplicateInParsing(targetSheet.duplicateVoters);
+      setAllSkippedRows(targetSheet.skippedVoters);
+      setShowSkippedWarning(targetSheet.skippedVoters.length > 0);
+
+      const totalVoterCandidates = targetSheet.validVoters.length + targetSheet.skippedVoters.length;
+      const totalActiveFileRows = totalVoterCandidates + (targetSheet.headerRows > 0 ? targetSheet.headerRows : 1);
+
+      setFileStats({
+        totalRowsInFile: totalActiveFileRows,
+        headerAndTitleRows: targetSheet.headerRows > 0 ? targetSheet.headerRows : 1,
+        emptyOrFooterRows: 0,
+        totalVoterCandidateRows: totalVoterCandidates,
+        validVotersCount: targetSheet.validVoters.length,
+        uniqueVotersCount: targetSheet.uniqueVotersCount,
+        duplicateVotersCount: targetSheet.duplicateVotersCount,
+        invalidVotersCount: targetSheet.skippedVoters.length,
+        sheetCount: sheets.length,
+        activeSheetName: targetSheet.sheetName,
+      });
+    }
+  };
+
+  /**
    * Parse file Excel / CSV menggunakan SheetJS
    */
   const handleFileChange = (file: File) => {
@@ -319,6 +428,10 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
     setSkippedInParsing([]);
     setDuplicateInParsing([]);
     setAllSkippedRows([]);
+    setParsedSheets([]);
+    setSelectedSheet('__ALL__');
+    setGlobalDuplicates([]);
+    setGlobalDuplicateCount(0);
 
     const reader = new FileReader();
 
@@ -337,374 +450,426 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
             cellText: true,
           });
 
-        if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-          throw new Error('File Excel tidak memiliki lembar kerja (sheet).');
-        }
-
-        let totalRowsInFile = 0;
-        let totalHeaderAndTitleRows = 0;
-        let totalEmptyOrFooterRows = 0;
-        const validVoters: ParsedVoterRow[] = [];
-        const skippedVoters: SkippedRowInfo[] = [];
-        const duplicateVoters: DuplicateRowInfo[] = [];
-        let primaryHeaders: string[] = [];
-        const seenNikMap = new Map<
-          string,
-          {
-            rowNumber: number;
-            nama: string;
-            dusun?: string;
-            rt?: string;
-            rw?: string;
-            tps?: string;
-            jenis_kelamin?: string;
-            tempat_lahir?: string;
-            tanggal_lahir?: string;
-          }
-        >();
-        let duplicateNikCountInFile = 0;
-
-        // Iterasi seluruh sheet di dalam workbook Excel (mendukung multi-sheet TPS maupun single sheet)
-        for (const sheetName of workbook.SheetNames) {
-          const worksheet = workbook.Sheets[sheetName];
-          if (!worksheet) continue;
-
-          const rawData: any[][] = XLSX.utils.sheet_to_json(worksheet, {
-            header: 1,
-            defval: '',
-            raw: true,
-          });
-
-          if (!rawData || rawData.length === 0) {
-            continue;
+          if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+            throw new Error('File Excel tidak memiliki lembar kerja (sheet).');
           }
 
-          // Pangkas baris-baris kosong di bagian paling bawah (trailing empty rows)
-          // agar total baris file tepat berhenti di baris data terakhir
-          let lastDataRowIdx = rawData.length - 1;
-          while (
-            lastDataRowIdx >= 0 &&
-            (!rawData[lastDataRowIdx] ||
-              rawData[lastDataRowIdx].length === 0 ||
-              !rawData[lastDataRowIdx].some(
-                (val: any) => val !== null && val !== undefined && String(val).trim() !== ''
-              ))
-          ) {
-            lastDataRowIdx--;
-          }
+          const parsedSheetList: ParsedSheetInfo[] = [];
 
-          if (lastDataRowIdx < 0) {
-            continue;
-          }
+          // Iterasi seluruh sheet di dalam workbook Excel
+          for (const sheetName of workbook.SheetNames) {
+            const worksheet = workbook.Sheets[sheetName];
+            if (!worksheet) continue;
 
-          const trimmedRawData = rawData.slice(0, lastDataRowIdx + 1);
-          totalRowsInFile += trimmedRawData.length;
+            const rawData: any[][] = XLSX.utils.sheet_to_json(worksheet, {
+              header: 1,
+              defval: '',
+              raw: true,
+            });
 
-          // 1. Deteksi Baris Header Kolom pada sheet ini
-          let headerRowIdx = -1;
-          let subHeaderRowIdx = -1;
+            if (!rawData || rawData.length === 0) {
+              continue;
+            }
 
-          for (let i = 0; i < Math.min(trimmedRawData.length, 25); i++) {
-            const rowStr = trimmedRawData[i].map((c) => String(c ?? '').trim().toUpperCase()).join(' ');
-            if (
-              (rowStr.includes('NIK') && rowStr.includes('NAMA')) ||
-              (rowStr.includes('PEMILIH') && rowStr.includes('KELAMIN')) ||
-              (rowStr.includes('NO DPT') && rowStr.includes('NIK'))
+            // Pangkas baris-baris kosong di bagian paling bawah
+            let lastDataRowIdx = rawData.length - 1;
+            while (
+              lastDataRowIdx >= 0 &&
+              (!rawData[lastDataRowIdx] ||
+                rawData[lastDataRowIdx].length === 0 ||
+                !rawData[lastDataRowIdx].some(
+                  (val: any) => val !== null && val !== undefined && String(val).trim() !== ''
+                ))
             ) {
-              headerRowIdx = i;
-              if (i + 1 < trimmedRawData.length) {
-                const nextRow = trimmedRawData[i + 1];
-                // Cek apakah baris berikutnya adalah data pemilih (memiliki NIK 16 digit)
-                const hasNikInData = nextRow.some((c: any) => {
-                  const digits = String(c ?? '').replace(/\D/g, '');
-                  return digits.length === 16;
-                });
+              lastDataRowIdx--;
+            }
 
-                if (!hasNikInData) {
-                  // Hanya jika baris kedua berupa teks subheader murni (misal TEMPAT, TANGGAL, DUSUN) tanpa NIK
-                  const nextRowCells = nextRow.map((c: any) => String(c ?? '').trim().toUpperCase());
-                  const isSubHeader = nextRowCells.some((cell: string) =>
-                    ['TEMPAT', 'TANGGAL', 'DUSUN', 'TEMPAT LAHIR', 'TGL LAHIR', 'RT', 'RW'].includes(cell)
-                  );
-                  if (isSubHeader) {
-                    subHeaderRowIdx = i + 1;
+            if (lastDataRowIdx < 0) {
+              continue;
+            }
+
+            const trimmedRawData = rawData.slice(0, lastDataRowIdx + 1);
+
+            // 1. Deteksi Baris Header Kolom pada sheet ini
+            let headerRowIdx = -1;
+            let subHeaderRowIdx = -1;
+
+            for (let i = 0; i < Math.min(trimmedRawData.length, 25); i++) {
+              const rowStr = trimmedRawData[i].map((c) => String(c ?? '').trim().toUpperCase()).join(' ');
+              if (
+                (rowStr.includes('NIK') && rowStr.includes('NAMA')) ||
+                (rowStr.includes('PEMILIH') && rowStr.includes('KELAMIN')) ||
+                (rowStr.includes('NO DPT') && rowStr.includes('NIK'))
+              ) {
+                headerRowIdx = i;
+                if (i + 1 < trimmedRawData.length) {
+                  const nextRow = trimmedRawData[i + 1];
+                  const hasNikInData = nextRow.some((c: any) => {
+                    const digits = String(c ?? '').replace(/\D/g, '');
+                    return digits.length === 16;
+                  });
+
+                  if (!hasNikInData) {
+                    const nextRowCells = nextRow.map((c: any) => String(c ?? '').trim().toUpperCase());
+                    const isSubHeader = nextRowCells.some((cell: string) =>
+                      ['TEMPAT', 'TANGGAL', 'DUSUN', 'TEMPAT LAHIR', 'TGL LAHIR', 'RT', 'RW'].includes(cell)
+                    );
+                    if (isSubHeader) {
+                      subHeaderRowIdx = i + 1;
+                    }
+                  }
+                }
+                break;
+              }
+            }
+
+            // Jika sheet tidak memiliki kolom NIK & Nama, lewati sheet ini
+            if (headerRowIdx === -1) {
+              continue;
+            }
+
+            const headerRow = trimmedRawData[headerRowIdx];
+            const subHeaderRow = subHeaderRowIdx !== -1 ? trimmedRawData[subHeaderRowIdx] : [];
+            const detectedHeaders: string[] = [];
+            const colKeyMap: { [colIndex: number]: string } = {};
+
+            const maxCols = Math.max(headerRow.length, subHeaderRow.length);
+
+            for (let c = 0; c < maxCols; c++) {
+              const mainHead = String(headerRow[c] || '').trim().toUpperCase();
+              const subHead = String(subHeaderRow[c] || '').trim().toUpperCase();
+
+              let combinedName = mainHead;
+              if (subHead && subHead !== mainHead) {
+                combinedName = mainHead ? `${mainHead} ${subHead}` : subHead;
+              }
+
+              detectedHeaders.push(combinedName || `KOLOM ${c + 1}`);
+
+              const normalizedStr = combinedName.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+              if (normalizedStr.includes('nik')) {
+                colKeyMap[c] = 'nik';
+              } else if (
+                normalizedStr.includes('namapemilih') ||
+                normalizedStr === 'nama' ||
+                normalizedStr.includes('namalengkap')
+              ) {
+                colKeyMap[c] = 'nama';
+              } else if (
+                normalizedStr.includes('jeniskelamin') ||
+                normalizedStr === 'jk' ||
+                normalizedStr.includes('kelamin')
+              ) {
+                colKeyMap[c] = 'jenis_kelamin';
+              } else if (normalizedStr.includes('tempat') || normalizedStr.includes('tmplahir')) {
+                colKeyMap[c] = 'tempat_lahir';
+              } else if (
+                normalizedStr.includes('tanggal') ||
+                normalizedStr.includes('tgllahir') ||
+                normalizedStr.includes('tgllhr')
+              ) {
+                colKeyMap[c] = 'tanggal_lahir';
+              } else if (normalizedStr.includes('dusun') || normalizedStr.includes('dukuh')) {
+                colKeyMap[c] = 'dusun';
+              } else if (normalizedStr === 'rt' || normalizedStr.endsWith('rt')) {
+                colKeyMap[c] = 'rt';
+              } else if (normalizedStr === 'rw' || normalizedStr.endsWith('rw')) {
+                colKeyMap[c] = 'rw';
+              } else if (normalizedStr.includes('tps') || normalizedStr.includes('nomortps')) {
+                colKeyMap[c] = 'tps';
+              } else if (normalizedStr === 'status' || normalizedStr.includes('statuspemilih')) {
+                colKeyMap[c] = 'status';
+              } else if (
+                normalizedStr === 'keterangan' ||
+                normalizedStr.includes('keterangan')
+              ) {
+                colKeyMap[c] = 'keterangan';
+              } else if (normalizedStr === 'ket') {
+                colKeyMap[c] = 'ket';
+              } else if (
+                normalizedStr === 'nodpt' ||
+                normalizedStr.includes('nodpt') ||
+                normalizedStr === 'dpt'
+              ) {
+                colKeyMap[c] = 'no_dpt';
+              } else if (normalizedStr === 'no' || normalizedStr === 'nourut') {
+                colKeyMap[c] = 'no';
+              }
+            }
+
+            // 2. Klasifikasi & Akuntansi Baris Data
+            const dataStartIndex = (subHeaderRowIdx !== -1 ? subHeaderRowIdx : headerRowIdx) + 1;
+
+            // Deteksi kemungkinan nomor TPS dari nama sheet (misal "TPS 01" -> "001")
+            let defaultSheetTps = '';
+            const sheetTpsMatch = sheetName.match(/TPS\s*0*([0-9]+)/i);
+            if (sheetTpsMatch && sheetTpsMatch[1]) {
+              defaultSheetTps = sheetTpsMatch[1].padStart(3, '0');
+            }
+
+            const sheetValidVoters: ParsedVoterRow[] = [];
+            const sheetSkippedVoters: SkippedRowInfo[] = [];
+            const sheetDuplicateVoters: DuplicateRowInfo[] = [];
+            const sheetSeenNik = new Map<
+              string,
+              {
+                rowNumber: number;
+                sheetName: string;
+                nama: string;
+                dusun?: string;
+                rt?: string;
+                rw?: string;
+                tps?: string;
+                jenis_kelamin?: string;
+                tempat_lahir?: string;
+                tanggal_lahir?: string;
+              }
+            >();
+            let sheetDupCount = 0;
+
+            for (let r = dataStartIndex; r < trimmedRawData.length; r++) {
+              const row = trimmedRawData[r];
+              const rowNumber = r + 1;
+
+              // A. Baris Kosong di tengah data: lewati langsung
+              if (!row || row.length === 0 || !row.some((val: any) => val !== null && val !== undefined && String(val).trim() !== '')) {
+                continue;
+              }
+
+              const item: any = {};
+              let rawNikCell: any = null;
+              for (let c = 0; c < row.length; c++) {
+                const key = colKeyMap[c];
+                if (key) {
+                  item[key] = formatCellValue(row[c]);
+                  if (key === 'nik') {
+                    rawNikCell = row[c];
                   }
                 }
               }
-              break;
-            }
-          }
 
-          // Jika sheet tidak memiliki kolom NIK & Nama (misal sheet petunjuk/grafik), lewati sheet ini
-          if (headerRowIdx === -1) {
-            continue;
-          }
+              const nama = String(item.nama || '').trim();
+              const nikResult = extractNik(rawNikCell !== null ? rawNikCell : item.nik);
 
-          const headerRow = trimmedRawData[headerRowIdx];
-          const subHeaderRow = subHeaderRowIdx !== -1 ? trimmedRawData[subHeaderRowIdx] : [];
-          const detectedHeaders: string[] = [];
-          const colKeyMap: { [colIndex: number]: string } = {};
-
-          const maxCols = Math.max(headerRow.length, subHeaderRow.length);
-
-          for (let c = 0; c < maxCols; c++) {
-            const mainHead = String(headerRow[c] || '').trim().toUpperCase();
-            const subHead = String(subHeaderRow[c] || '').trim().toUpperCase();
-
-            let combinedName = mainHead;
-            if (subHead && subHead !== mainHead) {
-              combinedName = mainHead ? `${mainHead} ${subHead}` : subHead;
-            }
-
-            detectedHeaders.push(combinedName || `KOLOM ${c + 1}`);
-
-            const normalizedStr = combinedName.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-            if (normalizedStr.includes('nik')) {
-              colKeyMap[c] = 'nik';
-            } else if (
-              normalizedStr.includes('namapemilih') ||
-              normalizedStr === 'nama' ||
-              normalizedStr.includes('namalengkap')
-            ) {
-              colKeyMap[c] = 'nama';
-            } else if (
-              normalizedStr.includes('jeniskelamin') ||
-              normalizedStr === 'jk' ||
-              normalizedStr.includes('kelamin')
-            ) {
-              colKeyMap[c] = 'jenis_kelamin';
-            } else if (normalizedStr.includes('tempat') || normalizedStr.includes('tmplahir')) {
-              colKeyMap[c] = 'tempat_lahir';
-            } else if (
-              normalizedStr.includes('tanggal') ||
-              normalizedStr.includes('tgllahir') ||
-              normalizedStr.includes('tgllhr')
-            ) {
-              colKeyMap[c] = 'tanggal_lahir';
-            } else if (normalizedStr.includes('dusun') || normalizedStr.includes('dukuh')) {
-              colKeyMap[c] = 'dusun';
-            } else if (normalizedStr === 'rt' || normalizedStr.endsWith('rt')) {
-              colKeyMap[c] = 'rt';
-            } else if (normalizedStr === 'rw' || normalizedStr.endsWith('rw')) {
-              colKeyMap[c] = 'rw';
-            } else if (normalizedStr.includes('tps') || normalizedStr.includes('nomortps')) {
-              colKeyMap[c] = 'tps';
-            } else if (normalizedStr === 'status' || normalizedStr.includes('statuspemilih')) {
-              colKeyMap[c] = 'status';
-            } else if (
-              normalizedStr === 'keterangan' ||
-              normalizedStr.includes('keterangan')
-            ) {
-              colKeyMap[c] = 'keterangan';
-            } else if (normalizedStr === 'ket') {
-              colKeyMap[c] = 'ket';
-            } else if (
-              normalizedStr === 'nodpt' ||
-              normalizedStr.includes('nodpt') ||
-              normalizedStr === 'dpt'
-            ) {
-              colKeyMap[c] = 'no_dpt';
-            } else if (normalizedStr === 'no' || normalizedStr === 'nourut') {
-              colKeyMap[c] = 'no';
-            }
-          }
-
-          if (primaryHeaders.length === 0) {
-            primaryHeaders = detectedHeaders;
-          }
-
-          // 2. Klasifikasi & Akuntansi Baris Data
-          const dataStartIndex = (subHeaderRowIdx !== -1 ? subHeaderRowIdx : headerRowIdx) + 1;
-          totalHeaderAndTitleRows += dataStartIndex;
-
-          // Deteksi kemungkinan nomor TPS dari nama sheet (misal "TPS 01" -> "001")
-          let defaultSheetTps = '';
-          const sheetTpsMatch = sheetName.match(/TPS\s*0*([0-9]+)/i);
-          if (sheetTpsMatch && sheetTpsMatch[1]) {
-            defaultSheetTps = sheetTpsMatch[1].padStart(3, '0');
-          }
-
-          for (let r = dataStartIndex; r < trimmedRawData.length; r++) {
-            const row = trimmedRawData[r];
-            const rowNumber = r + 1;
-
-            // A. Baris Kosong di tengah data: lewati langsung tanpa menambah hitungan non-data
-            if (!row || row.length === 0 || !row.some((val: any) => val !== null && val !== undefined && String(val).trim() !== '')) {
-              continue;
-            }
-
-            const item: any = {};
-            let rawNikCell: any = null;
-            for (let c = 0; c < row.length; c++) {
-              const key = colKeyMap[c];
-              if (key) {
-                item[key] = formatCellValue(row[c]);
-                if (key === 'nik') {
-                  rawNikCell = row[c];
-                }
+              // B. Baris Footer / Rekap Total
+              if (
+                nama.toUpperCase().includes('TOTAL') ||
+                nama.toUpperCase().includes('JUMLAH') ||
+                nama.toUpperCase().includes('MENGETAHUI') ||
+                nama.toUpperCase().includes('KETUA P2KD') ||
+                (!nama && !nikResult.nik)
+              ) {
+                continue;
               }
-            }
 
-            const nama = String(item.nama || '').trim();
-            const nikResult = extractNik(rawNikCell !== null ? rawNikCell : item.nik);
+              const resolvedTps = item.tps || defaultSheetTps || '';
 
-            // B. Baris Footer / Rekap Total / Tanda Tangan
-            if (
-              nama.toUpperCase().includes('TOTAL') ||
-              nama.toUpperCase().includes('JUMLAH') ||
-              nama.toUpperCase().includes('MENGETAHUI') ||
-              nama.toUpperCase().includes('KETUA P2KD') ||
-              (!nama && !nikResult.nik)
-            ) {
-              continue;
-            }
+              // C. Baris Data Pemilih Tidak Valid
+              if (!nama) {
+                sheetSkippedVoters.push({
+                  rowNumber,
+                  sheetName,
+                  nik: nikResult.raw || nikResult.nik || '(kosong)',
+                  nama: '(kosong)',
+                  jenis_kelamin: item.jenis_kelamin || 'L',
+                  tempat_lahir: item.tempat_lahir || '',
+                  tanggal_lahir: item.tanggal_lahir || '',
+                  dusun: item.dusun || '',
+                  rt: item.rt || '',
+                  rw: item.rw || '',
+                  tps: resolvedTps,
+                  status: item.status || 'DPS',
+                  keterangan: item.keterangan || item.ket || '',
+                  reason: 'Nama pemilih kosong di file Excel',
+                });
+                continue;
+              }
 
-            const resolvedTps = item.tps || defaultSheetTps || '';
+              if (nikResult.error || nikResult.nik.length !== 16) {
+                sheetSkippedVoters.push({
+                  rowNumber,
+                  sheetName,
+                  nik: nikResult.raw || '(kosong)',
+                  nama,
+                  jenis_kelamin: item.jenis_kelamin || 'L',
+                  tempat_lahir: item.tempat_lahir || '',
+                  tanggal_lahir: item.tanggal_lahir || '',
+                  dusun: item.dusun || '',
+                  rt: item.rt || '',
+                  rw: item.rw || '',
+                  tps: resolvedTps,
+                  status: item.status || 'DPS',
+                  keterangan: item.keterangan || item.ket || '',
+                  reason: nikResult.error || `NIK tidak valid (${nikResult.nik.length} digit, harus 16 digit)`,
+                });
+                continue;
+              }
 
-            // C. Baris Data Pemilih Tidak Valid
-            if (!nama) {
-              skippedVoters.push({
+              // D. Baris Data Pemilih Valid
+              if (sheetSeenNik.has(nikResult.nik)) {
+                const original = sheetSeenNik.get(nikResult.nik)!;
+                sheetDupCount++;
+                sheetDuplicateVoters.push({
+                  rowNumber,
+                  sheetName,
+                  nik: nikResult.nik,
+                  nama,
+                  dusun: item.dusun || '',
+                  rt: item.rt || '',
+                  rw: item.rw || '',
+                  tps: resolvedTps,
+                  jenis_kelamin: item.jenis_kelamin || 'L',
+                  tempat_lahir: item.tempat_lahir || '',
+                  tanggal_lahir: item.tanggal_lahir || '',
+                  firstSeenRowNumber: original.rowNumber,
+                  firstSeenSheetName: original.sheetName,
+                  firstSeenName: original.nama,
+                  firstSeenDusun: original.dusun || '',
+                  firstSeenRt: original.rt || '',
+                  firstSeenRw: original.rw || '',
+                  firstSeenTps: original.tps || '',
+                  firstSeenJenisKelamin: original.jenis_kelamin || 'L',
+                });
+              } else {
+                sheetSeenNik.set(nikResult.nik, {
+                  rowNumber,
+                  sheetName,
+                  nama,
+                  dusun: item.dusun || '',
+                  rt: item.rt || '',
+                  rw: item.rw || '',
+                  tps: resolvedTps,
+                  jenis_kelamin: item.jenis_kelamin || 'L',
+                  tempat_lahir: item.tempat_lahir || '',
+                  tanggal_lahir: item.tanggal_lahir || '',
+                });
+              }
+
+              const sequentialNo = sheetValidVoters.length + 1;
+              let resolvedNoDpt: number | string = sequentialNo;
+              if (item.no_dpt && !isNaN(Number(item.no_dpt)) && Number(item.no_dpt) > 0) {
+                resolvedNoDpt = Number(item.no_dpt);
+              } else if (item.no && !isNaN(Number(item.no)) && Number(item.no) > 0) {
+                resolvedNoDpt = Number(item.no);
+              }
+
+              sheetValidVoters.push({
                 rowNumber,
-                nik: nikResult.raw || nikResult.nik || '(kosong)',
-                nama: '(kosong)',
-                jenis_kelamin: item.jenis_kelamin || 'L',
-                tempat_lahir: item.tempat_lahir || '',
-                tanggal_lahir: item.tanggal_lahir || '',
-                dusun: item.dusun || '',
-                rt: item.rt || '',
-                rw: item.rw || '',
-                tps: resolvedTps,
-                status: item.status || 'DPS',
-                keterangan: item.keterangan || item.ket || '',
-                reason: 'Nama pemilih kosong di file Excel',
-              });
-              continue;
-            }
-
-            if (nikResult.error || nikResult.nik.length !== 16) {
-              skippedVoters.push({
-                rowNumber,
-                nik: nikResult.raw || '(kosong)',
-                nama,
-                jenis_kelamin: item.jenis_kelamin || 'L',
-                tempat_lahir: item.tempat_lahir || '',
-                tanggal_lahir: item.tanggal_lahir || '',
-                dusun: item.dusun || '',
-                rt: item.rt || '',
-                rw: item.rw || '',
-                tps: resolvedTps,
-                status: item.status || 'DPS',
-                keterangan: item.keterangan || item.ket || '',
-                reason: nikResult.error || `NIK tidak valid (${nikResult.nik.length} digit, harus 16 digit)`,
-              });
-              continue;
-            }
-
-            // D. Baris Data Pemilih Valid
-            if (seenNikMap.has(nikResult.nik)) {
-              const original = seenNikMap.get(nikResult.nik)!;
-              duplicateNikCountInFile++;
-              duplicateVoters.push({
-                rowNumber,
+                sheetName,
+                no_dpt: resolvedNoDpt,
+                no_urut: resolvedNoDpt,
+                no: resolvedNoDpt,
                 nik: nikResult.nik,
                 nama,
+                jenis_kelamin: item.jenis_kelamin || 'L',
+                tempat_lahir: item.tempat_lahir || '',
+                tanggal_lahir: item.tanggal_lahir || '',
                 dusun: item.dusun || '',
                 rt: item.rt || '',
                 rw: item.rw || '',
                 tps: resolvedTps,
-                jenis_kelamin: item.jenis_kelamin || 'L',
-                tempat_lahir: item.tempat_lahir || '',
-                tanggal_lahir: item.tanggal_lahir || '',
-                firstSeenRowNumber: original.rowNumber,
-                firstSeenName: original.nama,
-                firstSeenDusun: original.dusun || '',
-                firstSeenRt: original.rt || '',
-                firstSeenRw: original.rw || '',
-                firstSeenTps: original.tps || '',
-                firstSeenJenisKelamin: original.jenis_kelamin || 'L',
-              });
-            } else {
-              seenNikMap.set(nikResult.nik, {
-                rowNumber,
-                nama,
-                dusun: item.dusun || '',
-                rt: item.rt || '',
-                rw: item.rw || '',
-                tps: resolvedTps,
-                jenis_kelamin: item.jenis_kelamin || 'L',
-                tempat_lahir: item.tempat_lahir || '',
-                tanggal_lahir: item.tanggal_lahir || '',
+                status: item.status || 'DPS',
+                ket: item.ket || '',
+                keterangan: item.keterangan || '',
+                _isValidNik: true,
               });
             }
 
-            const sequentialNo = validVoters.length + 1;
-            let resolvedNoDpt: number | string = sequentialNo;
-            if (item.no_dpt && !isNaN(Number(item.no_dpt)) && Number(item.no_dpt) > 0) {
-              resolvedNoDpt = Number(item.no_dpt);
-            } else if (item.no && !isNaN(Number(item.no)) && Number(item.no) > 0) {
-              resolvedNoDpt = Number(item.no);
-            }
-
-            validVoters.push({
-              rowNumber,
-              no_dpt: resolvedNoDpt,
-              no_urut: resolvedNoDpt,
-              no: resolvedNoDpt,
-              nik: nikResult.nik,
-              nama,
-              jenis_kelamin: item.jenis_kelamin || 'L',
-              tempat_lahir: item.tempat_lahir || '',
-              tanggal_lahir: item.tanggal_lahir || '',
-              dusun: item.dusun || '',
-              rt: item.rt || '',
-              rw: item.rw || '',
-              tps: resolvedTps,
-              status: item.status || 'DPS',
-              ket: item.ket || '',
-              keterangan: item.keterangan || '',
-              _isValidNik: true,
+            parsedSheetList.push({
+              sheetName,
+              totalRows: trimmedRawData.length,
+              headerRows: dataStartIndex,
+              headers: detectedHeaders,
+              validVoters: sheetValidVoters,
+              skippedVoters: sheetSkippedVoters,
+              duplicateVoters: sheetDuplicateVoters,
+              uniqueVotersCount: sheetSeenNik.size,
+              duplicateVotersCount: sheetDupCount,
             });
           }
+
+          if (parsedSheetList.length === 0) {
+            throw new Error(
+              'Kolom header tidak ditemukan! Pastikan berkas Excel memiliki baris judul kolom yang memuat minimal kolom "NIK" dan "NAMA PEMILIH".'
+            );
+          }
+
+          // Kalkulasi Global Duplikat Antar Seluruh Sheet
+          const globalSeenNik = new Map<
+            string,
+            {
+              rowNumber: number;
+              sheetName: string;
+              nama: string;
+              dusun?: string;
+              rt?: string;
+              rw?: string;
+              tps?: string;
+              jenis_kelamin?: string;
+              tempat_lahir?: string;
+              tanggal_lahir?: string;
+            }
+          >();
+          const allGlobalDuplicates: DuplicateRowInfo[] = [];
+          let allGlobalDuplicateCount = 0;
+
+          for (const s of parsedSheetList) {
+            for (const v of s.validVoters) {
+              if (globalSeenNik.has(v.nik)) {
+                allGlobalDuplicateCount++;
+                const orig = globalSeenNik.get(v.nik)!;
+                allGlobalDuplicates.push({
+                  rowNumber: v.rowNumber,
+                  sheetName: v.sheetName,
+                  nik: v.nik,
+                  nama: v.nama,
+                  dusun: v.dusun,
+                  rt: v.rt,
+                  rw: v.rw,
+                  tps: v.tps,
+                  jenis_kelamin: v.jenis_kelamin,
+                  tempat_lahir: v.tempat_lahir,
+                  tanggal_lahir: v.tanggal_lahir,
+                  firstSeenRowNumber: orig.rowNumber,
+                  firstSeenSheetName: orig.sheetName,
+                  firstSeenName: orig.nama,
+                  firstSeenDusun: orig.dusun,
+                  firstSeenRt: orig.rt,
+                  firstSeenRw: orig.rw,
+                  firstSeenTps: orig.tps,
+                  firstSeenJenisKelamin: orig.jenis_kelamin,
+                });
+              } else {
+                globalSeenNik.set(v.nik, {
+                  rowNumber: v.rowNumber,
+                  sheetName: v.sheetName || s.sheetName,
+                  nama: v.nama,
+                  dusun: v.dusun,
+                  rt: v.rt,
+                  rw: v.rw,
+                  tps: v.tps,
+                  jenis_kelamin: v.jenis_kelamin,
+                  tempat_lahir: v.tempat_lahir,
+                  tanggal_lahir: v.tanggal_lahir,
+                });
+              }
+            }
+          }
+
+          setParsedSheets(parsedSheetList);
+          setGlobalDuplicates(allGlobalDuplicates);
+          setGlobalDuplicateCount(allGlobalDuplicateCount);
+
+          const initialSheetKey = '__ALL__';
+          setSelectedSheet(initialSheetKey);
+          applySheetView(initialSheetKey, parsedSheetList, allGlobalDuplicates, allGlobalDuplicateCount);
+
+          setIsParsing(false);
+        } catch (err: any) {
+          setIsParsing(false);
+          setParseError(err.message || 'Terjadi kesalahan saat memproses berkas Excel.');
         }
-
-        if (primaryHeaders.length === 0) {
-          throw new Error(
-            'Kolom header tidak ditemukan! Pastikan berkas Excel memiliki baris judul kolom yang memuat minimal kolom "NIK" dan "NAMA PEMILIH".'
-          );
-        }
-
-        setHeaderColumns(primaryHeaders);
-
-        const totalVoterCandidateRows = validVoters.length + skippedVoters.length;
-        const totalActiveFileRows = totalVoterCandidateRows + (totalHeaderAndTitleRows > 0 ? totalHeaderAndTitleRows : 1);
-
-        if (totalVoterCandidateRows === 0) {
-          throw new Error('Tidak ada baris data pemilih yang ditemukan dalam berkas Excel.');
-        }
-
-        setValidParsedRows(validVoters);
-        setSkippedInParsing(skippedVoters);
-        setDuplicateInParsing(duplicateVoters);
-        setAllSkippedRows(skippedVoters);
-        setShowSkippedWarning(skippedVoters.length > 0);
-
-        setFileStats({
-          totalRowsInFile: totalActiveFileRows,
-          headerAndTitleRows: totalHeaderAndTitleRows > 0 ? totalHeaderAndTitleRows : 1,
-          emptyOrFooterRows: 0,
-          totalVoterCandidateRows,
-          validVotersCount: validVoters.length,
-          uniqueVotersCount: seenNikMap.size,
-          duplicateVotersCount: duplicateNikCountInFile,
-          invalidVotersCount: skippedVoters.length,
-        });
-
-        setIsParsing(false);
-      } catch (err: any) {
-        setIsParsing(false);
-        setParseError(err.message || 'Terjadi kesalahan saat memproses berkas Excel.');
-      }
       }, 50);
     };
 
@@ -1831,16 +1996,72 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                       </button>
                     </div>
 
+                    {/* Multi-Sheet Selector jika file memiliki > 1 sheet */}
+                    {parsedSheets.length > 1 && (
+                      <div className="bg-gradient-to-r from-sky-50 to-indigo-50/60 border-2 border-sky-200 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                        <div className="flex items-start sm:items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-xl bg-sky-100 border border-sky-300 flex items-center justify-center shrink-0 text-[#1CB0F6] shadow-2xs">
+                            <Layers className="w-4 h-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-black text-slate-900">
+                                Terdeteksi {parsedSheets.length} Lembar Kerja (Sheet) di File Ini:
+                              </span>
+                              <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-sky-200/80 text-sky-800 uppercase tracking-wider">
+                                Multi-Sheet
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-600 font-medium truncate mt-0.5">
+                              {selectedSheet === '__ALL__'
+                                ? `Menggabungkan semua sheet (${parsedSheets.map((s) => s.sheetName).join(', ')})`
+                                : `Sedang menampilkan & mengimpor Sheet "${selectedSheet}" saja`}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                          <label className="text-[11px] font-bold text-slate-600 shrink-0">Sheet Aktif:</label>
+                          <select
+                            value={selectedSheet}
+                            onChange={(e) => {
+                              const newKey = e.target.value;
+                              setSelectedSheet(newKey);
+                              applySheetView(newKey, parsedSheets, globalDuplicates, globalDuplicateCount);
+                            }}
+                            className="text-xs font-bold text-slate-800 bg-white border-2 border-sky-300 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#1CB0F6] cursor-pointer shadow-xs"
+                          >
+                            <option value="__ALL__">
+                              Semua Sheet (Gabungkan {parsedSheets.length} Sheet)
+                            </option>
+                            {parsedSheets.map((s, idx) => (
+                              <option key={s.sheetName} value={s.sheetName}>
+                                Sheet {idx + 1}: "{s.sheetName}" ({s.validVoters.length.toLocaleString('id-ID')} pemilih • {s.headerRows} header)
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-center">
                       <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
                         <span className="text-[10px] text-slate-400 font-black uppercase block">Baris di File</span>
                         <span className="text-sm sm:text-base font-black text-slate-800">{fileStats.totalRowsInFile.toLocaleString('id-ID')}</span>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">Sampai data terakhir</span>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">
+                          {selectedSheet === '__ALL__' && parsedSheets.length > 1
+                            ? `Total gabungan ${parsedSheets.length} sheet`
+                            : 'Sampai data terakhir'}
+                        </span>
                       </div>
                       <div className="p-2.5 bg-purple-50/70 rounded-xl border border-purple-200">
                         <span className="text-[10px] text-purple-700 font-black uppercase block">Header / Judul</span>
                         <span className="text-sm sm:text-base font-black text-purple-700">{fileStats.headerAndTitleRows.toLocaleString('id-ID')}</span>
-                        <span className="text-[10px] text-purple-600/80 block mt-0.5">Dilewati otomatis</span>
+                        <span className="text-[10px] text-purple-600/80 block mt-0.5">
+                          {selectedSheet === '__ALL__' && parsedSheets.length > 1
+                            ? `Total ${parsedSheets.length} sheet dilewati`
+                            : 'Dilewati otomatis'}
+                        </span>
                       </div>
                       <div className="p-2.5 bg-[#E5F9D2] rounded-xl border border-[#58CC02]/40">
                         <span className="text-[10px] text-[#46A302] font-black uppercase block">Pemilih Unik Baru</span>
@@ -2002,15 +2223,15 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                                         <td className="py-3 px-3 whitespace-nowrap align-middle">
                                           <div className="flex items-center gap-1.5 font-black text-xs">
                                             <span className="px-2 py-0.5 rounded-lg bg-sky-100 text-[#1899D6] border border-sky-200 shadow-2xs">
-                                              Baris #{r.firstSeenRowNumber}
+                                              {r.firstSeenSheetName && parsedSheets.length > 1 ? `[${r.firstSeenSheetName}] ` : ''}Baris #{r.firstSeenRowNumber}
                                             </span>
                                             <span className="text-slate-400 font-black">⟷</span>
                                             <span className="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-800 border border-amber-200 shadow-2xs">
-                                              Baris #{r.rowNumber}
+                                              {r.sheetName && parsedSheets.length > 1 ? `[${r.sheetName}] ` : ''}Baris #{r.rowNumber}
                                             </span>
                                           </div>
                                           <span className="text-[10px] text-slate-500 font-bold block mt-1">
-                                            Baris #{r.rowNumber} kembar dengan Baris #{r.firstSeenRowNumber}
+                                            {r.sheetName && parsedSheets.length > 1 ? `[${r.sheetName}] ` : ''}Baris #{r.rowNumber} kembar dengan {r.firstSeenSheetName && parsedSheets.length > 1 ? `[${r.firstSeenSheetName}] ` : ''}Baris #{r.firstSeenRowNumber}
                                           </span>
                                         </td>
 
@@ -2112,6 +2333,11 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                                   </span>
                                 </td>
                                 <td className="py-2.5 px-3 font-bold text-slate-400 whitespace-nowrap">
+                                  {row.sheetName && parsedSheets.length > 1 ? (
+                                    <span className="px-1.5 py-0.5 rounded bg-sky-100 text-[#1899D6] text-[10px] font-bold mr-1.5 border border-sky-200">
+                                      {row.sheetName}
+                                    </span>
+                                  ) : null}
                                   Baris #{row.rowNumber}
                                 </td>
                                 <td className="py-2.5 px-3">
