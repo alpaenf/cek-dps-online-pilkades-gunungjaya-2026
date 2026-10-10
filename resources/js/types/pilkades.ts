@@ -41,14 +41,22 @@ export interface PilkadesConfig {
   dataPhase?: string;
   votingHours?: string;
   mascot_title?: string;
+  mascot_badge?: string;
+  mascot_tag?: string;
   mascot_desc?: string;
   mascot_slogan?: string;
   mascot_speeches?: string[];
+  mascot_filosofi?: {
+    num: number;
+    title: string;
+    desc: string;
+  }[];
   mascot_ajakan?: {
     num: number;
     title: string;
     desc: string;
   }[];
+  tata_nilai_netralitas?: string;
 }
 
 export interface TpsItem {

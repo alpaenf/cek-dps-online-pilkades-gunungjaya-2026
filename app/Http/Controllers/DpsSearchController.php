@@ -34,14 +34,38 @@ class DpsSearchController extends Controller
             'pengumuman' => $settings['pengumuman'] ?? 'Pengecekan DPS Online telah dibuka. Pastikan NIK Anda terdaftar!',
             'dataPhase' => $settings['data_phase'] ?? 'DPS',
             'votingHours' => $settings['voting_hours'] ?? '07.00 - 13.00 WIB',
+            'mascot_badge' => $settings['mascot_badge'] ?? 'IKON SEMANGAT DEMOKRASI DESA',
+            'mascot_tag' => $settings['mascot_tag'] ?? 'Burung Khas Lereng Gn. Slamet',
             'mascot_title' => $settings['mascot_title'] ?? 'Kenalkan, “GLAWU” Maskot Resmi Pilkades Gunungjaya 2026',
             'mascot_desc' => $settings['mascot_desc'] ?? 'Karakter sahabat pemilih yang ceria, berwibawa, dan sarat kearifan lokal. GLAWU hadir mengajak seluruh warga Desa Gunungjaya mewujudkan Pilkades yang aman, damai, bermartabat, dan tanpa politik uang.',
             'mascot_slogan' => $settings['mascot_slogan'] ?? '“Gunungjaya Guyub Rukun, Sukseskan Pilkades Bersama Glawu!”',
-            'mascot_speeches' => !empty($settings['mascot_speeches']) ? json_decode($settings['mascot_speeches'], true) : [
+            'mascot_speeches' => ! empty($settings['mascot_speeches']) ? json_decode($settings['mascot_speeches'], true) : [
                 '“Sugeng rawuh sedulur sedaya! Aja lali cek DPS-mu ya, sak swaramu nemtokake masa depan Desa Gunungjaya!”',
                 '“Beda pilihan kuwi lumrah lan wajar, sing penting paseduluran lan keguyuban tetep dijaga!”',
                 '“Tolak Serangan Fajar & Politik Uang! Pilih pemimpin nganggo ati nurani sing resik.”',
                 '“Tanggal pencoblosan teka gasik neng TPS jam 07.00 - 13.00 WIB, nggawa e-KTP ya Lur!”',
+            ],
+            'mascot_filosofi' => [
+                [
+                    'num' => 1,
+                    'title' => $settings['filosofi_1_title'] ?? 'Burung Biru Lereng Slamet',
+                    'desc' => $settings['filosofi_1_desc'] ?? 'Melambangkan kecerdasan, ketajaman visi, ketangguhan, dan suara lantang warga desa dalam menyuarakan aspirasi pembangunan bersama.',
+                ],
+                [
+                    'num' => 2,
+                    'title' => $settings['filosofi_2_title'] ?? 'Blangkon & Surjan Lurik',
+                    'desc' => $settings['filosofi_2_desc'] ?? 'Wujud penghormatan terhadap adat istiadat Jawa Tengah, kesantunan bertutur kata, serta kerendahan hati dalam kepemimpinan desa.',
+                ],
+                [
+                    'num' => 3,
+                    'title' => $settings['filosofi_3_title'] ?? 'Sayap Mengajak & Surat Suara',
+                    'desc' => $settings['filosofi_3_desc'] ?? 'Simbol ajakan ramah agar warga aktif menggunakan hak pilihnya secara mandiri, berdaulat, dan bebas dari paksaan pihak manapun.',
+                ],
+                [
+                    'num' => 4,
+                    'title' => $settings['filosofi_4_title'] ?? 'Ekspresi Ceria & Ramah',
+                    'desc' => $settings['filosofi_4_desc'] ?? 'Menegaskan bahwa Pilkades adalah pesta rakyat yang membahagiakan, menjalin kerukunan antar RT/RW, dan merajut persatuan desa.',
+                ],
             ],
             'mascot_ajakan' => [
                 [
@@ -65,6 +89,7 @@ class DpsSearchController extends Controller
                     'desc' => $settings['ajakan_4_desc'] ?? 'Bawalah dokumen resmi (e-KTP asli / Surat Keterangan dan Surat Pemberitahuan/Model C6). Gunakan hak suaramu dan celupkan jari ke tinta!',
                 ],
             ],
+            'tata_nilai_netralitas' => $settings['tata_nilai_netralitas'] ?? 'Panitia Pemilihan Kepala Desa (P2KD) Gunungjaya netral, tidak berpihak kepada siapapun, dan mengabdi untuk kemaslahatan masyarakat desa.',
         ];
 
         $tpsList = Tps::orderBy('nomor_tps')->get()->map(function ($item) {
@@ -95,7 +120,7 @@ class DpsSearchController extends Controller
             $jk = strtoupper((string) $row->jenis_kelamin);
             $cnt = (int) $row->count;
 
-            if (!isset($tpsCounts[$tpsId])) {
+            if (! isset($tpsCounts[$tpsId])) {
                 $tpsCounts[$tpsId] = ['L' => 0, 'P' => 0];
             }
 
@@ -113,6 +138,7 @@ class DpsSearchController extends Controller
         $tpsStats = $allTps->map(function ($tps) use ($tpsCounts) {
             $laki = $tpsCounts[$tps->id]['L'] ?? 0;
             $perempuan = $tpsCounts[$tps->id]['P'] ?? 0;
+
             return [
                 'tps' => $tps->nomor_tps,
                 'lokasi' => $tps->nama_lokasi,
@@ -127,7 +153,7 @@ class DpsSearchController extends Controller
             'totalDps' => $totalDps,
             'totalLakiLaki' => $totalLakiLaki,
             'totalPerempuan' => $totalPerempuan,
-            'lastUpdated' => now()->translatedFormat('d F Y, H:i') . ' WIB',
+            'lastUpdated' => now()->translatedFormat('d F Y, H:i').' WIB',
             'tpsStats' => $tpsStats,
         ];
 
@@ -156,7 +182,7 @@ class DpsSearchController extends Controller
         $voter = Voter::with('tps')->where('nik', $cleanNik)->first();
 
         // Audit Trail Pencarian
-        $maskedNik = substr($cleanNik, 0, 4) . '********' . substr($cleanNik, 12);
+        $maskedNik = substr($cleanNik, 0, 4).'********'.substr($cleanNik, 12);
         SearchLog::create([
             'nik_masked' => $maskedNik,
             'is_found' => (bool) $voter,
@@ -202,7 +228,7 @@ class DpsSearchController extends Controller
             'lampiran' => 'nullable|file|mimes:jpeg,png,jpg,pdf|max:4096',
         ]);
 
-        $ticketNumber = 'P2KD-ADU-' . date('Y') . '-' . rand(10000, 99999);
+        $ticketNumber = 'P2KD-ADU-'.date('Y').'-'.rand(10000, 99999);
 
         $filePath = null;
         if ($request->hasFile('lampiran')) {

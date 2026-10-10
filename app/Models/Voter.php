@@ -46,6 +46,7 @@ class Voter extends Model
         if (strlen($nik) !== 16) {
             return $nik;
         }
-        return substr($nik, 0, 4) . '********' . substr($nik, 12);
+
+        return substr($nik, 0, 4).'********'.substr($nik, 12);
     }
 }

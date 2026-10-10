@@ -22,7 +22,7 @@ return new class extends Migration
                 'PINDAH_DOMISILI',
                 'MENINGGAL_DUNIA',
                 'DATA_GANDA',
-                'KOREKSI_DATA'
+                'KOREKSI_DATA',
             ])->default('BELUM_TERDAFTAR');
             $table->text('deskripsi');
             $table->string('file_lampiran')->nullable();

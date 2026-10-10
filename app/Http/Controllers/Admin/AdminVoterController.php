@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\ImportDuplicateVoter;
+use App\Models\PendingSkippedVoter;
 use App\Models\Tps;
 use App\Models\Voter;
 use Carbon\Carbon;
@@ -54,7 +56,15 @@ class AdminVoterController extends Controller
             $validated['status'] = 'DPS';
         }
 
-        Voter::create($validated);
+        $voter = Voter::create($validated);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Pemilih {$voter->nama} (NIK: {$voter->nik}) berhasil ditambahkan ke DPS!",
+                'voter' => $voter,
+            ]);
+        }
 
         return redirect()->back()->with('success', "Pemilih {$validated['nama']} (NIK: {$validated['nik']}) berhasil ditambahkan ke DPS!");
     }
@@ -226,8 +236,8 @@ class AdminVoterController extends Controller
     public function importChunk(Request $request): JsonResponse
     {
         $votersData = $request->input('voters', []);
-        $updateExisting = (bool) $request->input('update_existing', true);
-        $resetFirst = (bool) $request->input('reset_first', false);
+        $updateExisting = filter_var($request->input('update_existing', true), FILTER_VALIDATE_BOOLEAN);
+        $resetFirst = filter_var($request->input('reset_first', false), FILTER_VALIDATE_BOOLEAN);
 
         if (empty($votersData) || ! is_array($votersData)) {
             return response()->json(['success' => false, 'message' => 'Tidak ada data pemilih yang dikirim.'], 400);
@@ -245,6 +255,7 @@ class AdminVoterController extends Controller
             $skippedRows = [];
 
             foreach ($votersData as $index => $item) {
+                $itemRowNumber = $item['rowNumber'] ?? ($index + 1);
                 $normalized = $this->normalizeVoterRow((array) $item);
                 if (! $normalized) {
                     $skipped++;
@@ -252,10 +263,10 @@ class AdminVoterController extends Controller
                     $rawNik = preg_replace('/\D/', '', (string) ($item['nik'] ?? ''));
                     $nama = trim((string) ($item['nama'] ?? $item['nama_pemilih'] ?? ''));
                     $reason = empty($nama) ? 'Nama pemilih kosong' : (strlen($rawNik) !== 16
-                        ? (empty($rawNik) ? 'NIK kosong' : "NIK tidak valid — {$rawNik} ({$rawNik} = ".strlen($rawNik).' digit, harus 16)')
+                        ? (empty($rawNik) ? 'NIK kosong' : "NIK tidak valid — {$rawNik} (".strlen($rawNik).' digit, harus 16)')
                         : 'Data tidak memenuhi syarat');
                     $skippedRows[] = [
-                        'rowNumber' => $index + 1,
+                        'rowNumber' => $itemRowNumber,
                         'nik' => $rawNik ?: '(kosong)',
                         'nama' => $nama ?: '(kosong)',
                         'reason' => $reason,
@@ -272,7 +283,7 @@ class AdminVoterController extends Controller
                     } else {
                         $skipped++;
                         $skippedRows[] = [
-                            'rowNumber' => $index + 1,
+                            'rowNumber' => $itemRowNumber,
                             'nik' => $normalized['nik'],
                             'nama' => $normalized['nama'],
                             'reason' => 'NIK sudah ada di database & opsi update dinonaktifkan',
@@ -406,7 +417,17 @@ class AdminVoterController extends Controller
         $nik = null;
         foreach (['nik', 'no_nik', 'nomor_induk_kependudukan', 'nik_pemilih'] as $k) {
             if (! empty($row[$k])) {
-                $nik = preg_replace('/\D/', '', (string) $row[$k]);
+                $rawVal = trim((string) $row[$k]);
+                // Handle scientific notation string jika ada (misal 3.32703450278E+15)
+                if (preg_match('/^[0-9]+(\.[0-9]+)?[eE]\+[0-9]+$/', $rawVal)) {
+                    $rawVal = number_format((float) $rawVal, 0, '', '');
+                }
+                $digits = preg_replace('/\D/', '', $rawVal);
+                if (strlen($digits) === 16) {
+                    $nik = $digits;
+                    break;
+                }
+                $nik = $digits;
                 break;
             }
         }
@@ -645,5 +666,331 @@ class AdminVoterController extends Controller
         }
 
         return $keys;
+    }
+
+    /**
+     * Sinkronisasi data pemilih yang terlewat / gagal dari parsing client
+     */
+    public function syncPendingSkipped(Request $request): JsonResponse
+    {
+        $skippedList = $request->input('skipped_voters', []);
+        $clearPrevious = (bool) $request->input('clear_previous', false);
+
+        if ($clearPrevious) {
+            PendingSkippedVoter::query()->delete();
+        }
+
+        $insertedCount = 0;
+        foreach ($skippedList as $item) {
+            $rawNik = preg_replace('/\D/', '', (string) ($item['nik'] ?? ''));
+            $nama = trim((string) ($item['nama'] ?? ''));
+
+            // Cari TPS yang cocok
+            $tpsId = null;
+            if (! empty($item['tps'])) {
+                if (is_numeric($item['tps'])) {
+                    $foundTps = Tps::find($item['tps']) ?: Tps::where('nomor_tps', (string) $item['tps'])->first();
+                    $tpsId = $foundTps?->id;
+                } else {
+                    $num = preg_replace('/\D/', '', (string) $item['tps']);
+                    $foundTps = Tps::where('nomor_tps', $num)->first();
+                    $tpsId = $foundTps?->id;
+                }
+            }
+
+            PendingSkippedVoter::create([
+                'row_number' => $item['rowNumber'] ?? null,
+                'nik' => $rawNik ?: ($item['nik'] ?? null),
+                'nama' => $nama === '(kosong)' ? '' : $nama,
+                'jenis_kelamin' => strtoupper(substr((string) ($item['jenis_kelamin'] ?? 'L'), 0, 1)) === 'P' ? 'P' : 'L',
+                'tempat_lahir' => $item['tempat_lahir'] ?? null,
+                'tanggal_lahir' => $item['tanggal_lahir'] ?? null,
+                'dusun' => $item['dusun'] ?? null,
+                'rt' => $item['rt'] ?? null,
+                'rw' => $item['rw'] ?? null,
+                'tps_id' => $tpsId,
+                'tps_name' => ! empty($item['tps']) ? (string) $item['tps'] : null,
+                'status' => $item['status'] ?? 'DPS',
+                'keterangan' => $item['keterangan'] ?? ($item['ket'] ?? null),
+                'reason' => $item['reason'] ?? 'Data belum lengkap',
+            ]);
+            $insertedCount++;
+        }
+
+        $totalPending = PendingSkippedVoter::count();
+
+        return response()->json([
+            'success' => true,
+            'inserted' => $insertedCount,
+            'total_pending' => $totalPending,
+            'message' => "Berhasil menyimpan {$insertedCount} data pemilih terlewat ke daftar draf.",
+        ]);
+    }
+
+    /**
+     * Simpan pemilih dari draf terlewat ke DPS permanen
+     */
+    public function savePendingSkipped(Request $request, PendingSkippedVoter $pendingSkippedVoter): JsonResponse|RedirectResponse
+    {
+        $validated = $request->validate([
+            'nik' => ['required', 'digits:16', Rule::unique('voters', 'nik')],
+            'nama' => ['required', 'string', 'max:150'],
+            'jenis_kelamin' => ['required', Rule::in(['L', 'P'])],
+            'tps_id' => ['required', 'exists:tps,id'],
+            'dusun' => ['nullable', 'string', 'max:100'],
+            'rt' => ['nullable', 'string', 'max:10'],
+            'rw' => ['nullable', 'string', 'max:10'],
+            'tempat_lahir' => ['nullable', 'string', 'max:100'],
+            'tanggal_lahir' => ['nullable', 'date'],
+            'keterangan' => ['nullable', 'string'],
+        ], [
+            'nik.required' => 'Nomor NIK 16 digit wajib diisi.',
+            'nik.digits' => 'NIK harus tepat 16 digit angka.',
+            'nik.unique' => 'NIK sudah terdaftar dalam data pemilih (DPS).',
+            'nama.required' => 'Nama lengkap pemilih wajib diisi.',
+            'jenis_kelamin.required' => 'Pilih jenis kelamin (L atau P).',
+            'tps_id.required' => 'Pilih TPS untuk pemilih ini.',
+            'tps_id.exists' => 'TPS yang dipilih tidak ditemukan.',
+        ]);
+
+        $validated['status'] = 'DPS';
+
+        DB::beginTransaction();
+        try {
+            $voter = Voter::create($validated);
+            $pendingSkippedVoter->delete();
+            DB::commit();
+
+            $remainingCount = PendingSkippedVoter::count();
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Pemilih {$voter->nama} (NIK: {$voter->nik}) berhasil disimpan ke DPS!",
+                    'voter' => $voter,
+                    'remaining_count' => $remainingCount,
+                ]);
+            }
+
+            return redirect()->back()->with('success', "Pemilih {$voter->nama} berhasil disimpan ke DPS!");
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menyimpan: '.$e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', 'Gagal menyimpan: '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Hapus satu data terlewat / batalkan
+     */
+    public function deletePendingSkipped(Request $request, PendingSkippedVoter $pendingSkippedVoter): JsonResponse|RedirectResponse
+    {
+        $nama = $pendingSkippedVoter->nama ?: 'Baris #'.$pendingSkippedVoter->row_number;
+        $pendingSkippedVoter->delete();
+        $remainingCount = PendingSkippedVoter::count();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Data {$nama} dihapus dari daftar terlewat.",
+                'remaining_count' => $remainingCount,
+            ]);
+        }
+
+        return redirect()->back()->with('success', "Data {$nama} dihapus dari daftar terlewat.");
+    }
+
+    /**
+     * Bersihkan seluruh data terlewat
+     */
+    public function clearAllPendingSkipped(Request $request): JsonResponse|RedirectResponse
+    {
+        PendingSkippedVoter::query()->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Semua data terlewat berhasil dibersihkan.',
+                'remaining_count' => 0,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Semua data terlewat berhasil dibersihkan.');
+    }
+
+    /**
+     * Sinkronkan riwayat baris data ganda dari file Excel import terakhir
+     */
+    public function syncImportDuplicates(Request $request): JsonResponse
+    {
+        $duplicateList = $request->input('duplicate_voters', []);
+        $clearPrevious = filter_var($request->input('clear_previous', true), FILTER_VALIDATE_BOOLEAN);
+
+        if ($clearPrevious) {
+            ImportDuplicateVoter::query()->delete();
+        }
+
+        if (empty($duplicateList) || ! is_array($duplicateList)) {
+            return response()->json([
+                'success' => true,
+                'inserted' => 0,
+                'total_duplicates' => ImportDuplicateVoter::count(),
+                'message' => 'Daftar data ganda kosong.',
+            ]);
+        }
+
+        $insertedCount = 0;
+        foreach ($duplicateList as $item) {
+            $rawNik = preg_replace('/\D/', '', (string) ($item['nik'] ?? ''));
+            $nama = trim((string) ($item['nama'] ?? ''));
+            $firstSeenName = trim((string) ($item['firstSeenName'] ?? ''));
+
+            // Cari TPS yang cocok
+            $tpsId = null;
+            if (! empty($item['tps'])) {
+                if (is_numeric($item['tps'])) {
+                    $foundTps = Tps::find($item['tps']) ?: Tps::where('nomor_tps', (string) $item['tps'])->first();
+                    $tpsId = $foundTps?->id;
+                } else {
+                    $num = preg_replace('/\D/', '', (string) $item['tps']);
+                    $foundTps = Tps::where('nomor_tps', $num)->first();
+                    $tpsId = $foundTps?->id;
+                }
+            }
+
+            $isExact = strtoupper($nama) === strtoupper($firstSeenName);
+
+            ImportDuplicateVoter::create([
+                'row_number' => $item['rowNumber'] ?? null,
+                'nik' => $rawNik ?: ($item['nik'] ?? ''),
+                'nama' => $nama,
+                'dusun' => $item['dusun'] ?? null,
+                'rt' => $item['rt'] ?? null,
+                'rw' => $item['rw'] ?? null,
+                'tps_id' => $tpsId,
+                'tps_name' => ! empty($item['tps']) ? (string) $item['tps'] : null,
+                'first_seen_row_number' => $item['firstSeenRowNumber'] ?? null,
+                'first_seen_name' => $firstSeenName,
+                'first_seen_dusun' => $item['firstSeenDusun'] ?? null,
+                'first_seen_rt' => $item['firstSeenRt'] ?? null,
+                'first_seen_rw' => $item['firstSeenRw'] ?? null,
+                'first_seen_tps_name' => ! empty($item['firstSeenTps']) ? (string) $item['firstSeenTps'] : null,
+                'status_match' => $isExact ? 'IDENTIK' : 'BEDA_NAMA',
+            ]);
+            $insertedCount++;
+        }
+
+        $totalDuplicates = ImportDuplicateVoter::count();
+
+        return response()->json([
+            'success' => true,
+            'inserted' => $insertedCount,
+            'total_duplicates' => $totalDuplicates,
+            'message' => "Berhasil menyimpan {$insertedCount} data ganda dari file Excel terakhir.",
+        ]);
+    }
+
+    /**
+     * Bersihkan seluruh riwayat data ganda dari import terakhir
+     */
+    public function clearAllImportDuplicates(Request $request): JsonResponse|RedirectResponse
+    {
+        ImportDuplicateVoter::query()->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Seluruh riwayat data ganda berhasil dibersihkan.',
+                'remaining_count' => 0,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Seluruh riwayat data ganda berhasil dibersihkan.');
+    }
+
+    /**
+     * Unduh laporan data ganda dari import terakhir dalam format Excel
+     */
+    public function exportImportDuplicates(): StreamedResponse
+    {
+        $duplicates = ImportDuplicateVoter::with('tps')->orderBy('row_number', 'asc')->get();
+
+        $spreadsheet = new Spreadsheet;
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Data Ganda DPS');
+
+        // Header Dokumen
+        $sheet->setCellValue('A1', 'LAPORAN REKONSILIASI DATA NIK GANDA IMPORT DPS');
+        $sheet->setCellValue('A2', 'PILKADES GUNUNGJAYA 2026');
+        $sheet->setCellValue('A3', 'Diekspor pada: '.Carbon::now()->translatedFormat('d F Y H:i:s').' WIB');
+        $sheet->mergeCells('A1:L1');
+        $sheet->mergeCells('A2:L2');
+        $sheet->mergeCells('A3:L3');
+
+        $headers = [
+            'NO',
+            'PASANGAN BARIS KEMBAR',
+            'NIK (16 DIGIT)',
+            'BARIS ASAL',
+            'NAMA (BARIS ASAL)',
+            'TPS ASAL',
+            'ALAMAT ASAL',
+            'BARIS GANDA',
+            'NAMA (BARIS GANDA)',
+            'TPS GANDA',
+            'ALAMAT GANDA',
+            'STATUS ANALISIS',
+        ];
+
+        $colIdx = 1;
+        foreach ($headers as $h) {
+            $colLetter = Coordinate::stringFromColumnIndex($colIdx);
+            $sheet->setCellValue("{$colLetter}5", $h);
+            $colIdx++;
+        }
+
+        $rowNum = 6;
+        $no = 1;
+        foreach ($duplicates as $d) {
+            $sheet->setCellValue("A{$rowNum}", $no++);
+            $sheet->setCellValue("B{$rowNum}", "Baris #{$d->first_seen_row_number} ⟷ Baris #{$d->row_number}");
+            $sheet->setCellValueExplicit("C{$rowNum}", (string) $d->nik, DataType::TYPE_STRING);
+            $sheet->setCellValue("D{$rowNum}", "Baris #{$d->first_seen_row_number}");
+            $sheet->setCellValue("E{$rowNum}", $d->first_seen_name);
+            $sheet->setCellValue("F{$rowNum}", $d->first_seen_tps_name ?: ($d->tps?->nomor_tps ? "TPS {$d->tps->nomor_tps}" : '-'));
+            $sheet->setCellValue("G{$rowNum}", trim("{$d->first_seen_dusun} RT {$d->first_seen_rt} RW {$d->first_seen_rw}"));
+            $sheet->setCellValue("H{$rowNum}", "Baris #{$d->row_number}");
+            $sheet->setCellValue("I{$rowNum}", $d->nama);
+            $sheet->setCellValue("J{$rowNum}", $d->tps_name ?: ($d->tps?->nomor_tps ? "TPS {$d->tps->nomor_tps}" : '-'));
+            $sheet->setCellValue("K{$rowNum}", trim("{$d->dusun} RT {$d->rt} RW {$d->rw}"));
+            $sheet->setCellValue("L{$rowNum}", $d->status_match === 'IDENTIK' ? '100% Identik' : 'Beda Nama (Diperbarui)');
+            $rowNum++;
+        }
+
+        $lastRow = max(6, $rowNum - 1);
+        $sheet->getStyle("A5:L{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN);
+        $sheet->getStyle('A5:L5')->getFont()->setBold(true);
+        $sheet->getStyle('A5:L5')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('EBF7FD');
+
+        foreach (range(1, 12) as $c) {
+            $sheet->getColumnDimension(Coordinate::stringFromColumnIndex($c))->setAutoSize(true);
+        }
+
+        $filename = 'Laporan_Data_Ganda_Import_DPS_'.date('Ymd_His').'.xlsx';
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 }

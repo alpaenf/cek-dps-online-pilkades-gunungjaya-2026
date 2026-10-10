@@ -36,7 +36,7 @@ class AdminTpsController extends Controller
     public function update(Request $request, Tps $tps): RedirectResponse
     {
         $validated = $request->validate([
-            'nomor_tps' => ['required', 'string', 'max:20', 'unique:tps,nomor_tps,' . $tps->id],
+            'nomor_tps' => ['required', 'string', 'max:20', 'unique:tps,nomor_tps,'.$tps->id],
             'nama_lokasi' => ['required', 'string', 'max:150'],
             'dusun' => ['required', 'string', 'max:100'],
             'alamat' => ['nullable', 'string'],

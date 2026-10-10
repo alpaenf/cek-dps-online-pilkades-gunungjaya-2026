@@ -8,7 +8,6 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\DpsSearchController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 // Halaman Publik Cek DPS Pilkades Gunungjaya 2026
 Route::get('/', [DpsSearchController::class, 'index'])->name('home');
@@ -31,6 +30,7 @@ Route::get('/admin', function () {
     if (auth()->check()) {
         return redirect()->route('admin.dashboard');
     }
+
     return redirect()->route('login');
 });
 
@@ -57,6 +57,17 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::post('/voters/import-chunk', [AdminVoterController::class, 'importChunk'])->name('admin.voters.import.chunk');
     Route::post('/voters/import-file', [AdminVoterController::class, 'importFile'])->name('admin.voters.import.file');
     Route::get('/voters/template-excel', [AdminVoterController::class, 'downloadTemplate'])->name('admin.voters.template');
+
+    // Data Pemilih Terlewat (Draft & Lengkapi Data)
+    Route::post('/voters/sync-pending-skipped', [AdminVoterController::class, 'syncPendingSkipped'])->name('admin.voters.pending.sync');
+    Route::post('/voters/pending-save/{pendingSkippedVoter}', [AdminVoterController::class, 'savePendingSkipped'])->name('admin.voters.pending.save');
+    Route::delete('/voters/pending-delete/{pendingSkippedVoter}', [AdminVoterController::class, 'deletePendingSkipped'])->name('admin.voters.pending.delete');
+    Route::delete('/voters/pending-clear-all', [AdminVoterController::class, 'clearAllPendingSkipped'])->name('admin.voters.pending.clear');
+
+    // Data NIK Ganda Hasil Import Terakhir
+    Route::post('/voters/sync-import-duplicates', [AdminVoterController::class, 'syncImportDuplicates'])->name('admin.voters.duplicates.sync');
+    Route::delete('/voters/duplicates-clear-all', [AdminVoterController::class, 'clearAllImportDuplicates'])->name('admin.voters.duplicates.clear');
+    Route::get('/voters/export-import-duplicates', [AdminVoterController::class, 'exportImportDuplicates'])->name('admin.voters.duplicates.export');
 
     // Pengaturan Profil Admin (WhatsApp, Email, Password)
     Route::get('/profile', [AdminProfileController::class, 'edit'])->name('admin.profile.edit');

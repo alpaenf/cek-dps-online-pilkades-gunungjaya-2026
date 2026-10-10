@@ -25,17 +25,32 @@ import {
   MessageSquareQuote,
   Megaphone,
   Save,
-  RotateCcw
+  RotateCcw,
+  ClipboardList,
+  Copy,
+  AlertTriangle
 } from 'lucide-react';
 import { DEFAULT_VILLAGE_LOGO, DEFAULT_MASCOT_GLAWU } from '@/data/logoPresets';
 import { PageProps } from '@/types';
 import { ImportVoterModal } from '@/Components/ImportVoterModal';
+import { PendingSkippedVotersView, PendingSkippedVoterItem } from '@/Components/PendingSkippedVotersView';
+import { ImportDuplicateVotersView, ImportDuplicateVoterItem } from '@/Components/ImportDuplicateVotersView';
 
 export interface MascotSettings {
   mascot_title: string;
+  mascot_badge?: string;
+  mascot_tag?: string;
   mascot_desc: string;
   mascot_slogan: string;
   mascot_speeches: string;
+  filosofi_1_title?: string;
+  filosofi_1_desc?: string;
+  filosofi_2_title?: string;
+  filosofi_2_desc?: string;
+  filosofi_3_title?: string;
+  filosofi_3_desc?: string;
+  filosofi_4_title?: string;
+  filosofi_4_desc?: string;
   ajakan_1_title: string;
   ajakan_1_desc: string;
   ajakan_2_title: string;
@@ -44,6 +59,7 @@ export interface MascotSettings {
   ajakan_3_desc: string;
   ajakan_4_title: string;
   ajakan_4_desc: string;
+  tata_nilai_netralitas?: string;
   data_phase?: string;
   pengumuman?: string;
 }
@@ -128,6 +144,10 @@ interface AdminDashboardProps {
     tahun: string;
   };
   mascotSettings?: MascotSettings;
+  pendingSkippedVoters: PendingSkippedVoterItem[];
+  pendingSkippedCount: number;
+  importDuplicateVoters: ImportDuplicateVoterItem[];
+  importDuplicateCount: number;
 }
 
 export default function AdminDashboard({
@@ -138,15 +158,23 @@ export default function AdminDashboard({
   filters,
   config,
   mascotSettings,
+  pendingSkippedVoters,
+  pendingSkippedCount,
+  importDuplicateVoters,
+  importDuplicateCount,
 }: AdminDashboardProps) {
   const { flash } = usePage<PageProps>().props;
   const queryParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const initialTab = (queryParams?.get('tab') as 'dps' | 'tps' | 'redaksi') || (filters.tab === 'redaksi' ? 'redaksi' : (filters.tab === 'tps' ? 'tps' : 'dps'));
-  const [activeTab, setActiveTab] = useState<'dps' | 'tps' | 'redaksi'>(initialTab);
+  const initialTab = (queryParams?.get('tab') as 'dps' | 'tps' | 'redaksi' | 'terlewat' | 'ganda') || (filters.tab === 'ganda' ? 'ganda' : (filters.tab === 'redaksi' ? 'redaksi' : (filters.tab === 'tps' ? 'tps' : (filters.tab === 'terlewat' ? 'terlewat' : 'dps'))));
+  const [activeTab, setActiveTab] = useState<'dps' | 'tps' | 'redaksi' | 'terlewat' | 'ganda'>(initialTab);
+  const [pendingCount, setPendingCount] = useState(pendingSkippedCount);
+  const [duplicateCount, setDuplicateCount] = useState(importDuplicateCount);
 
   // Redaksi & Mascot Form
   const mascotForm = useForm<MascotSettings>({
     mascot_title: mascotSettings?.mascot_title || 'Kenalkan, “GLAWU” Maskot Resmi Pilkades Gunungjaya 2026',
+    mascot_badge: mascotSettings?.mascot_badge || 'IKON SEMANGAT DEMOKRASI DESA',
+    mascot_tag: mascotSettings?.mascot_tag || 'Burung Khas Lereng Gn. Slamet',
     mascot_desc: mascotSettings?.mascot_desc || 'Karakter sahabat pemilih yang ceria, berwibawa, dan sarat kearifan lokal. GLAWU hadir mengajak seluruh warga Desa Gunungjaya mewujudkan Pilkades yang aman, damai, bermartabat, dan tanpa politik uang.',
     mascot_slogan: mascotSettings?.mascot_slogan || '“Gunungjaya Guyub Rukun, Sukseskan Pilkades Bersama Glawu!”',
     mascot_speeches: mascotSettings?.mascot_speeches || [
@@ -155,6 +183,14 @@ export default function AdminDashboard({
       '“Tolak Serangan Fajar & Politik Uang! Pilih pemimpin nganggo ati nurani sing resik.”',
       '“Tanggal pencoblosan teka gasik neng TPS jam 07.00 - 13.00 WIB, nggawa e-KTP ya Lur!”'
     ].join('\n'),
+    filosofi_1_title: mascotSettings?.filosofi_1_title || 'Burung Biru Lereng Slamet',
+    filosofi_1_desc: mascotSettings?.filosofi_1_desc || 'Melambangkan kecerdasan, ketajaman visi, ketangguhan, dan suara lantang warga desa dalam menyuarakan aspirasi pembangunan bersama.',
+    filosofi_2_title: mascotSettings?.filosofi_2_title || 'Blangkon & Surjan Lurik',
+    filosofi_2_desc: mascotSettings?.filosofi_2_desc || 'Wujud penghormatan terhadap adat istiadat Jawa Tengah, kesantunan bertutur kata, serta kerendahan hati dalam kepemimpinan desa.',
+    filosofi_3_title: mascotSettings?.filosofi_3_title || 'Sayap Mengajak & Surat Suara',
+    filosofi_3_desc: mascotSettings?.filosofi_3_desc || 'Simbol ajakan ramah agar warga aktif menggunakan hak pilihnya secara mandiri, berdaulat, dan bebas dari paksaan pihak manapun.',
+    filosofi_4_title: mascotSettings?.filosofi_4_title || 'Ekspresi Ceria & Ramah',
+    filosofi_4_desc: mascotSettings?.filosofi_4_desc || 'Menegaskan bahwa Pilkades adalah pesta rakyat yang membahagiakan, menjalin kerukunan antar RT/RW, dan merajut persatuan desa.',
     ajakan_1_title: mascotSettings?.ajakan_1_title || 'Cek NIK di DPT Secara Online Sekarang',
     ajakan_1_desc: mascotSettings?.ajakan_1_desc || 'Jangan menunggu hari H. Pastikan namamu sudah tertera di Daftar Pemilih Tetap (DPT) dan ketahui nomor TPS tempatmu mencoblos.',
     ajakan_2_title: mascotSettings?.ajakan_2_title || 'Ketahui Visi, Misi, & Program Calon Kepala Desa',
@@ -163,6 +199,7 @@ export default function AdminDashboard({
     ajakan_3_desc: mascotSettings?.ajakan_3_desc || 'Jangan gadaikan masa depan desa selama 6 tahun hanya demi nominal sesaat. Pemimpin berintegritas lahir dari pemilih yang bermartabat.',
     ajakan_4_title: mascotSettings?.ajakan_4_title || 'Hadir Tepat Waktu di TPS (07.00 - 13.00 WIB)',
     ajakan_4_desc: mascotSettings?.ajakan_4_desc || 'Bawalah dokumen resmi (e-KTP asli / Surat Keterangan dan Surat Pemberitahuan/Model C6). Gunakan hak suaramu dan celupkan jari ke tinta!',
+    tata_nilai_netralitas: mascotSettings?.tata_nilai_netralitas || 'Panitia Pemilihan Kepala Desa (P2KD) Gunungjaya netral, tidak berpihak kepada siapapun, dan mengabdi untuk kemaslahatan masyarakat desa.',
     data_phase: mascotSettings?.data_phase || 'DPS',
     pengumuman: mascotSettings?.pengumuman || 'Pengecekan DPS Online telah dibuka. Pastikan NIK Anda terdaftar!',
   });
@@ -488,143 +525,314 @@ export default function AdminDashboard({
           </div>
         )}
 
-        {/* 4 Duolingo Tactile Overview Stat Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total DPS */}
-          <div className="bg-white border-2 border-b-4 border-slate-200 rounded-3xl p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-500">
-                Total Pemilih (DPS)
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-[#58CC02] text-white flex items-center justify-center">
-                <Users className="w-4 h-4" />
+        {/* Audit Rekonsiliasi Import Excel & Stat Cards */}
+        {(() => {
+          const totalRawExcelRows = stats.totalDps + duplicateCount + pendingCount;
+          const pctBersih = totalRawExcelRows > 0 ? ((stats.totalDps / totalRawExcelRows) * 100).toFixed(1) : '100';
+          const pctGanda = totalRawExcelRows > 0 ? ((duplicateCount / totalRawExcelRows) * 100).toFixed(1) : '0';
+          const pctTerlewat = totalRawExcelRows > 0 ? ((pendingCount / totalRawExcelRows) * 100).toFixed(1) : '0';
+
+          return (
+            <div className="space-y-4">
+              {/* Row 1: 4 Kotak Rekonsiliasi Data Import Excel */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-[#6366F1]" />
+                    <span>Rekonsiliasi & Audit Data Import Excel</span>
+                  </span>
+                  <span className="hidden sm:inline-flex text-[11px] font-bold text-slate-400">
+                    Mentah ({totalRawExcelRows.toLocaleString('id-ID')}) = Bersih ({stats.totalDps.toLocaleString('id-ID')}) + Ganda ({duplicateCount.toLocaleString('id-ID')}) + Terlewat ({pendingCount.toLocaleString('id-ID')})
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                  {/* Kotak 1: Total Data Mentah Excel */}
+                  <div className="bg-white border-2 border-b-4 border-indigo-200 rounded-3xl p-4 sm:p-5 shadow-xs hover:border-indigo-300 transition-all">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-indigo-600">
+                        Total Mentah Excel
+                      </span>
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#6366F1] text-white flex items-center justify-center shrink-0">
+                        <FileSpreadsheet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </div>
+                    </div>
+                    <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                      {totalRawExcelRows.toLocaleString('id-ID')}
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-indigo-600 mt-1 block truncate">
+                      DPS + Ganda + Terlewat
+                    </span>
+                  </div>
+
+                  {/* Kotak 2: Total Data Bersih (DPS) */}
+                  <div className="bg-white border-2 border-b-4 border-green-200 rounded-3xl p-4 sm:p-5 shadow-xs hover:border-[#58CC02] transition-all">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-[#46A302]">
+                        Total Data Bersih (DPS)
+                      </span>
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#58CC02] text-white flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </div>
+                    </div>
+                    <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                      {stats.totalDps.toLocaleString('id-ID')}
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-[#46A302] mt-1 block truncate">
+                      {pctBersih}% Hak Suara Masuk DPS
+                    </span>
+                  </div>
+
+                  {/* Kotak 3: Total Data Ganda / Duplikat */}
+                  <div className="bg-white border-2 border-b-4 border-sky-200 rounded-3xl p-4 sm:p-5 shadow-xs hover:border-[#1CB0F6] transition-all">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-[#1899D6]">
+                        Total Data Ganda
+                      </span>
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#1CB0F6] text-white flex items-center justify-center shrink-0">
+                        <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </div>
+                    </div>
+                    <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                      {duplicateCount.toLocaleString('id-ID')}
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-[#1899D6] mt-1 block truncate">
+                      {pctGanda}% NIK Duplikat Dilewati
+                    </span>
+                  </div>
+
+                  {/* Kotak 4: Total Data Terlewat / Draf */}
+                  <div className="bg-white border-2 border-b-4 border-amber-200 rounded-3xl p-4 sm:p-5 shadow-xs hover:border-[#FF9600] transition-all">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-[#E07700]">
+                        Total Data Terlewat
+                      </span>
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#FF9600] text-white flex items-center justify-center shrink-0">
+                        <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </div>
+                    </div>
+                    <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                      {pendingCount.toLocaleString('id-ID')}
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-[#E07700] mt-1 block truncate">
+                      {pctTerlewat}% Data Belum Lengkap
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Row 2: Rincian Demografi DPS & TPS */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                {/* Laki-laki */}
+                <div className="bg-white border-2 border-b-4 border-slate-200 rounded-2xl p-4 shadow-xs flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-500 block">
+                      Pemilih Laki-Laki (DPS)
+                    </span>
+                    <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+                      {stats.totalL.toLocaleString('id-ID')}
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-[#1899D6]">
+                      {pctL}% dari total DPS
+                    </span>
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-sky-100 text-[#1CB0F6] flex items-center justify-center shrink-0">
+                    <User className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* Perempuan */}
+                <div className="bg-white border-2 border-b-4 border-slate-200 rounded-2xl p-4 shadow-xs flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-500 block">
+                      Pemilih Perempuan (DPS)
+                    </span>
+                    <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+                      {stats.totalP.toLocaleString('id-ID')}
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-[#E07700]">
+                      {pctP}% dari total DPS
+                    </span>
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-[#FF9600] flex items-center justify-center shrink-0">
+                    <User className="w-4 h-4" />
+                  </div>
+                </div>
+
+                {/* Total TPS */}
+                <div className="bg-white border-2 border-b-4 border-slate-200 rounded-2xl p-4 shadow-xs flex items-center justify-between">
+                  <div>
+                    <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-500 block">
+                      Sebaran Lokasi TPS
+                    </span>
+                    <div className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-0.5">
+                      {stats.totalTps} TPS
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-slate-500">
+                      Tersebar di wilayah dusun
+                    </span>
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-amber-100 text-[#FFC800] flex items-center justify-center shrink-0">
+                    <MapPin className="w-4 h-4 text-amber-700" />
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              {stats.totalDps.toLocaleString('id-ID')}
-            </div>
-            <span className="text-[11px] font-bold text-[#46A302] mt-1 block">
-              100% Hak Suara Sementara
-            </span>
-          </div>
+          );
+        })()}
 
-          {/* Laki-laki */}
-          <div className="bg-white border-2 border-b-4 border-slate-200 rounded-3xl p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-black uppercase tracking-wider text-[#1899D6]">
-                Pemilih Laki-Laki
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-[#1CB0F6] text-white flex items-center justify-center">
-                <User className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              {stats.totalL.toLocaleString('id-ID')}
-            </div>
-            <span className="text-[11px] font-bold text-[#1899D6] mt-1 block">
-              {pctL}% dari total pemilih
-            </span>
-          </div>
-
-          {/* Perempuan */}
-          <div className="bg-white border-2 border-b-4 border-slate-200 rounded-3xl p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-black uppercase tracking-wider text-[#E07700]">
-                Pemilih Perempuan
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-[#FF9600] text-white flex items-center justify-center">
-                <User className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              {stats.totalP.toLocaleString('id-ID')}
-            </div>
-            <span className="text-[11px] font-bold text-[#E07700] mt-1 block">
-              {pctP}% dari total pemilih
-            </span>
-          </div>
-
-          {/* Total TPS */}
-          <div className="bg-white border-2 border-b-4 border-slate-200 rounded-3xl p-5 shadow-xs">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-black uppercase tracking-wider text-slate-500">
-                Lokasi TPS
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-[#FFC800] text-amber-950 flex items-center justify-center">
-                <MapPin className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              {stats.totalTps}
-            </div>
-            <span className="text-[11px] font-bold text-slate-500 mt-1 block">
-              Tersebar di wilayah dusun
-            </span>
-          </div>
-        </div>
-
-        {/* Tab Switcher: DPS vs TPS vs Redaksi & Maskot */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 border-b-2 border-slate-200 pb-3">
-          <button
-            type="button"
-            onClick={() => setActiveTab('dps')}
-            className={`w-full px-4 sm:px-5 py-3 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-between sm:justify-center gap-2 cursor-pointer ${
-              activeTab === 'dps'
-                ? 'bg-[#58CC02] text-white border-b-4 border-[#46A302] shadow-sm'
-                : 'bg-white hover:bg-slate-100 text-slate-600 border-2 border-slate-200'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <Database className="w-4 h-4 shrink-0" />
-              <span>Daftar Pemilih (DPS)</span>
-            </span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black shrink-0 ${
-              activeTab === 'dps' ? 'bg-white text-[#58CC02]' : 'bg-slate-100 text-slate-600'
+        {/* Tab Switcher: DPS vs TPS vs Redaksi & Maskot vs Data Ganda (+ Data Terlewat jika ada) */}
+        {(() => {
+          const totalVisibleTabs = 4 + (pendingCount > 0 ? 1 : 0);
+          return (
+            <div className={`grid gap-2.5 sm:gap-3 border-b-2 border-slate-200 pb-4 ${
+              totalVisibleTabs === 5
+                ? 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5'
+                : 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-4'
             }`}>
-              {stats.totalDps.toLocaleString('id-ID')}
-            </span>
-          </button>
+              {/* Tab 1: DATA DPS */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('dps')}
+                className={`w-full min-h-[64px] sm:min-h-[72px] p-2.5 sm:p-3.5 rounded-2xl transition-all flex flex-col justify-between gap-1.5 cursor-pointer active:translate-y-0.5 text-left ${
+                  activeTab === 'dps'
+                    ? 'bg-[#58CC02] text-white border-2 border-b-4 border-[#46A302] shadow-sm'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border-2 border-b-4 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full gap-1">
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                    activeTab === 'dps' ? 'bg-white/20 text-white' : 'bg-green-100 text-[#58CC02]'
+                  }`}>
+                    <Database className="w-3.5 h-3.5 shrink-0" />
+                  </div>
+                  <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md font-black shrink-0 whitespace-nowrap ${
+                    activeTab === 'dps' ? 'bg-white text-[#58CC02]' : 'bg-slate-100 text-slate-700'
+                  }`}>
+                    {stats.totalDps.toLocaleString('id-ID')}
+                  </span>
+                </div>
+                <span className="font-black text-xs sm:text-sm uppercase tracking-wider block truncate">
+                  Data DPS
+                </span>
+              </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('tps')}
-            className={`w-full px-4 sm:px-5 py-3 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-between sm:justify-center gap-2 cursor-pointer ${
-              activeTab === 'tps'
-                ? 'bg-[#1CB0F6] text-white border-b-4 border-[#1899D6] shadow-sm'
-                : 'bg-white hover:bg-slate-100 text-slate-600 border-2 border-slate-200'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 shrink-0" />
-              <span>Lokasi TPS</span>
-            </span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black shrink-0 ${
-              activeTab === 'tps' ? 'bg-white text-[#1CB0F6]' : 'bg-slate-100 text-slate-600'
-            }`}>
-              {stats.totalTps} TPS
-            </span>
-          </button>
+              {/* Tab 2: LOKASI TPS */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('tps')}
+                className={`w-full min-h-[64px] sm:min-h-[72px] p-2.5 sm:p-3.5 rounded-2xl transition-all flex flex-col justify-between gap-1.5 cursor-pointer active:translate-y-0.5 text-left ${
+                  activeTab === 'tps'
+                    ? 'bg-[#1CB0F6] text-white border-2 border-b-4 border-[#1899D6] shadow-sm'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border-2 border-b-4 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full gap-1">
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                    activeTab === 'tps' ? 'bg-white/20 text-white' : 'bg-sky-100 text-[#1CB0F6]'
+                  }`}>
+                    <MapPin className="w-3.5 h-3.5 shrink-0" />
+                  </div>
+                  <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md font-black shrink-0 whitespace-nowrap ${
+                    activeTab === 'tps' ? 'bg-white text-[#1CB0F6]' : 'bg-slate-100 text-slate-700'
+                  }`}>
+                    {stats.totalTps} TPS
+                  </span>
+                </div>
+                <span className="font-black text-xs sm:text-sm uppercase tracking-wider block truncate">
+                  Lokasi TPS
+                </span>
+              </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('redaksi')}
-            className={`w-full px-4 sm:px-5 py-3 rounded-2xl text-xs sm:text-sm font-black uppercase tracking-wider transition-all flex items-center justify-between sm:justify-center gap-2 cursor-pointer ${
-              activeTab === 'redaksi'
-                ? 'bg-[#9333EA] text-white border-b-4 border-[#7E22CE] shadow-sm'
-                : 'bg-white hover:bg-slate-100 text-slate-600 border-2 border-slate-200'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 shrink-0 text-amber-300" />
-              <span>Redaksi & Maskot</span>
-            </span>
-            <span className={`text-[10px] px-2 py-0.5 rounded-lg font-black shrink-0 ${
-              activeTab === 'redaksi' ? 'bg-white text-[#9333EA]' : 'bg-purple-100 text-purple-700'
-            }`}>
-              Si Glawu ✨
-            </span>
-          </button>
-        </div>
+              {/* Tab 3: REDAKSI & MASKOT */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('redaksi')}
+                className={`w-full min-h-[64px] sm:min-h-[72px] p-2.5 sm:p-3.5 rounded-2xl transition-all flex flex-col justify-between gap-1.5 cursor-pointer active:translate-y-0.5 text-left ${
+                  activeTab === 'redaksi'
+                    ? 'bg-[#9333EA] text-white border-2 border-b-4 border-[#7E22CE] shadow-sm'
+                    : 'bg-white hover:bg-slate-50 text-slate-700 border-2 border-b-4 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full gap-1">
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                    activeTab === 'redaksi' ? 'bg-white/20 text-white' : 'bg-purple-100 text-[#9333EA]'
+                  }`}>
+                    <Sparkles className="w-3.5 h-3.5 shrink-0 text-amber-300" />
+                  </div>
+                  <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md font-black shrink-0 whitespace-nowrap ${
+                    activeTab === 'redaksi' ? 'bg-white text-[#9333EA]' : 'bg-purple-100 text-purple-700'
+                  }`}>
+                    Si Glawu ✨
+                  </span>
+                </div>
+                <span className="font-black text-xs sm:text-sm uppercase tracking-wider block truncate">
+                  Redaksi
+                </span>
+              </button>
+
+              {/* Tab 4: DATA GANDA */}
+              <button
+                type="button"
+                onClick={() => setActiveTab('ganda')}
+                className={`w-full min-h-[64px] sm:min-h-[72px] p-2.5 sm:p-3.5 rounded-2xl transition-all flex flex-col justify-between gap-1.5 cursor-pointer active:translate-y-0.5 text-left ${
+                  activeTab === 'ganda'
+                    ? 'bg-[#1CB0F6] text-white border-2 border-b-4 border-[#1899D6] shadow-sm'
+                    : 'bg-[#EBF7FD] hover:bg-sky-100 text-[#1899D6] border-2 border-b-4 border-[#1CB0F6]/40 hover:border-[#1CB0F6]'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full gap-1">
+                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                    activeTab === 'ganda' ? 'bg-white/20 text-white' : 'bg-sky-200 text-[#1899D6]'
+                  }`}>
+                    <Copy className="w-3.5 h-3.5 shrink-0" />
+                  </div>
+                  <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md font-black shrink-0 whitespace-nowrap ${
+                    activeTab === 'ganda'
+                      ? 'bg-white text-[#1899D6]'
+                      : duplicateCount > 0
+                      ? 'bg-sky-200 text-sky-950'
+                      : 'bg-sky-100 text-sky-700'
+                  }`}>
+                    {duplicateCount > 0 ? `${duplicateCount} ganda` : '0 ganda'}
+                  </span>
+                </div>
+                <span className="font-black text-xs sm:text-sm uppercase tracking-wider block truncate">
+                  Data Ganda
+                </span>
+              </button>
+
+              {/* Tab 5: DATA TERLEWAT (Dinamis jika ada data yang belum lengkap) */}
+              {pendingCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('terlewat')}
+                  className={`w-full min-h-[64px] sm:min-h-[72px] p-2.5 sm:p-3.5 rounded-2xl transition-all flex flex-col justify-between gap-1.5 cursor-pointer active:translate-y-0.5 text-left col-span-2 sm:col-span-1 ${
+                    activeTab === 'terlewat'
+                      ? 'bg-[#FF9600] text-white border-2 border-b-4 border-[#E07700] shadow-sm'
+                      : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-2 border-b-4 border-amber-300 hover:border-amber-400'
+                  }`}
+                >
+                  <div className="flex items-center justify-between w-full gap-1">
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${
+                      activeTab === 'terlewat' ? 'bg-white/20 text-white' : 'bg-amber-200 text-amber-900'
+                    }`}>
+                      <ClipboardList className="w-3.5 h-3.5 shrink-0" />
+                    </div>
+                    <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md font-black shrink-0 whitespace-nowrap animate-pulse ${
+                      activeTab === 'terlewat' ? 'bg-white text-[#FF9600]' : 'bg-amber-200 text-amber-950'
+                    }`}>
+                      {pendingCount} orang
+                    </span>
+                  </div>
+                  <span className="font-black text-xs sm:text-sm uppercase tracking-wider block truncate">
+                    Data Terlewat
+                  </span>
+                </button>
+              )}
+            </div>
+          );
+        })()}
 
         {/* TAB 1: KELOLA DAFTAR PEMILIH SEMENTARA (DPS) */}
         {activeTab === 'dps' && (
@@ -1350,6 +1558,109 @@ export default function AdminDashboard({
                 </div>
               </div>
 
+              {/* SECTION 4: 4 Makna Filosofi Simbolik Maskot */}
+              <div className="bg-white border-2 border-b-4 border-slate-200 rounded-3xl p-6 sm:p-8 space-y-6 shadow-sm">
+                <div className="flex items-center gap-2.5 pb-3 border-b-2 border-slate-100">
+                  <div className="w-8 h-8 rounded-xl bg-[#1CB0F6]/15 text-[#1CB0F6] flex items-center justify-center font-black text-sm">
+                    4
+                  </div>
+                  <div>
+                    <h3 className="text-base font-black text-slate-900">
+                      4 Makna Filosofi & Karakter Maskot
+                    </h3>
+                    <p className="text-xs text-slate-500 font-medium">
+                      Penjelasan makna filosofis simbolik karakter Si Glawu yang tampil pada Tab Filosofi & Makna.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* Filosofi 1 */}
+                  <div className="bg-slate-50 border-2 border-b-4 border-slate-200 rounded-2xl p-4 space-y-3">
+                    <span className="text-xs font-black text-[#1CB0F6] uppercase tracking-wider block">
+                      Makna 1 (Burung Slamet)
+                    </span>
+                    <input
+                      type="text"
+                      value={mascotForm.data.filosofi_1_title || ''}
+                      onChange={(e) => mascotForm.setData('filosofi_1_title', e.target.value)}
+                      placeholder="Judul filosofi 1"
+                      className="w-full px-3.5 py-2 rounded-xl border-2 border-slate-200 text-xs font-bold bg-white mb-2"
+                    />
+                    <textarea
+                      rows={2}
+                      value={mascotForm.data.filosofi_1_desc || ''}
+                      onChange={(e) => mascotForm.setData('filosofi_1_desc', e.target.value)}
+                      placeholder="Uraian filosofi 1"
+                      className="w-full px-3.5 py-2 rounded-xl border-2 border-slate-200 text-xs bg-white"
+                    />
+                  </div>
+
+                  {/* Filosofi 2 */}
+                  <div className="bg-slate-50 border-2 border-b-4 border-slate-200 rounded-2xl p-4 space-y-3">
+                    <span className="text-xs font-black text-[#D97706] uppercase tracking-wider block">
+                      Makna 2 (Blangkon & Surjan Lurik)
+                    </span>
+                    <input
+                      type="text"
+                      value={mascotForm.data.filosofi_2_title || ''}
+                      onChange={(e) => mascotForm.setData('filosofi_2_title', e.target.value)}
+                      placeholder="Judul filosofi 2"
+                      className="w-full px-3.5 py-2 rounded-xl border-2 border-slate-200 text-xs font-bold bg-white mb-2"
+                    />
+                    <textarea
+                      rows={2}
+                      value={mascotForm.data.filosofi_2_desc || ''}
+                      onChange={(e) => mascotForm.setData('filosofi_2_desc', e.target.value)}
+                      placeholder="Uraian filosofi 2"
+                      className="w-full px-3.5 py-2 rounded-xl border-2 border-slate-200 text-xs bg-white"
+                    />
+                  </div>
+
+                  {/* Filosofi 3 */}
+                  <div className="bg-slate-50 border-2 border-b-4 border-slate-200 rounded-2xl p-4 space-y-3">
+                    <span className="text-xs font-black text-[#46A302] uppercase tracking-wider block">
+                      Makna 3 (Sayap & Surat Suara)
+                    </span>
+                    <input
+                      type="text"
+                      value={mascotForm.data.filosofi_3_title || ''}
+                      onChange={(e) => mascotForm.setData('filosofi_3_title', e.target.value)}
+                      placeholder="Judul filosofi 3"
+                      className="w-full px-3.5 py-2 rounded-xl border-2 border-slate-200 text-xs font-bold bg-white mb-2"
+                    />
+                    <textarea
+                      rows={2}
+                      value={mascotForm.data.filosofi_3_desc || ''}
+                      onChange={(e) => mascotForm.setData('filosofi_3_desc', e.target.value)}
+                      placeholder="Uraian filosofi 3"
+                      className="w-full px-3.5 py-2 rounded-xl border-2 border-slate-200 text-xs bg-white"
+                    />
+                  </div>
+
+                  {/* Filosofi 4 */}
+                  <div className="bg-slate-50 border-2 border-b-4 border-slate-200 rounded-2xl p-4 space-y-3">
+                    <span className="text-xs font-black text-[#9333EA] uppercase tracking-wider block">
+                      Makna 4 (Ekspresi Ceria & Ramah)
+                    </span>
+                    <input
+                      type="text"
+                      value={mascotForm.data.filosofi_4_title || ''}
+                      onChange={(e) => mascotForm.setData('filosofi_4_title', e.target.value)}
+                      placeholder="Judul filosofi 4"
+                      className="w-full px-3.5 py-2 rounded-xl border-2 border-slate-200 text-xs font-bold bg-white mb-2"
+                    />
+                    <textarea
+                      rows={2}
+                      value={mascotForm.data.filosofi_4_desc || ''}
+                      onChange={(e) => mascotForm.setData('filosofi_4_desc', e.target.value)}
+                      placeholder="Uraian filosofi 4"
+                      className="w-full px-3.5 py-2 rounded-xl border-2 border-slate-200 text-xs bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* SECTION 4: Pengaturan Tambahan (Tahapan Data & Pengumuman) */}
               <div className="bg-white border-2 border-b-4 border-slate-200 rounded-3xl p-6 sm:p-8 space-y-4 shadow-sm">
                 <div className="flex items-center gap-2.5 pb-3 border-b-2 border-slate-100">
@@ -1420,6 +1731,40 @@ export default function AdminDashboard({
               </div>
 
             </form>
+          </div>
+        )}
+
+        {/* TAB 4: DATA PEMILIH TERLEWAT (hanya tampil jika ada pending) */}
+        {activeTab === 'terlewat' && (
+          <div className="space-y-5">
+            <PendingSkippedVotersView
+              initialPendingVoters={pendingSkippedVoters}
+              allTpsOptions={allTpsOptions}
+              onNavigateToDps={() => setActiveTab('dps')}
+              onCountChange={(count) => {
+                setPendingCount(count);
+                if (count === 0) {
+                  setActiveTab('dps');
+                }
+              }}
+            />
+          </div>
+        )}
+
+        {/* TAB 5: DATA NIK GANDA (hanya tampil jika ada riwayat data ganda dari import) */}
+        {activeTab === 'ganda' && (
+          <div className="space-y-5">
+            <ImportDuplicateVotersView
+              initialDuplicateVoters={importDuplicateVoters}
+              allTpsOptions={allTpsOptions}
+              onNavigateToDps={() => setActiveTab('dps')}
+              onCountChange={(count) => {
+                setDuplicateCount(count);
+                if (count === 0) {
+                  setActiveTab('dps');
+                }
+              }}
+            />
           </div>
         )}
       </main>
