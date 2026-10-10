@@ -19,11 +19,16 @@ export interface DptPublicResult {
   found: boolean;
   nama?: string;
   nik_masked?: string;
+  no_dpt?: number | string;
   dusun?: string;
   rt?: string;
   rw?: string;
   tps?: string;
+  nama_tps?: string;
+  alamat_tps?: string;
   status?: string;
+  jenis_kelamin?: string;
+  keterangan?: string;
   message?: string;
 }
 

@@ -56,15 +56,31 @@ export const SearchResult: React.FC<SearchResultProps> = ({
 
             {/* Core Details */}
             <div className="p-6 sm:p-8 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {/* No DPT */}
+                <div className="p-4 rounded-2xl bg-[#EBF7FD] border-2 border-b-4 border-[#1CB0F6]/40">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-[#1899D6] block mb-1">
+                    Nomor DPT
+                  </span>
+                  <p className="text-2xl font-black font-mono text-slate-900">
+                    No. {result.no_dpt ? String(result.no_dpt) : '-'}
+                  </p>
+                  <span className="text-[10px] text-slate-500 font-medium">
+                    Nomor urut resmi pemilih di DPS
+                  </span>
+                </div>
+
                 {/* Nama */}
                 <div className="p-4 rounded-2xl bg-slate-50 border-2 border-b-4 border-slate-200">
                   <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1">
                     Nama Lengkap
                   </span>
-                  <p className="text-xl font-black text-slate-900">
+                  <p className="text-xl font-black text-slate-900 truncate">
                     {result.nama}
                   </p>
+                  <span className="text-[10px] text-slate-400 font-medium">
+                    Sesuai dokumen kependudukan
+                  </span>
                 </div>
 
                 {/* NIK Masked */}
@@ -72,17 +88,24 @@ export const SearchResult: React.FC<SearchResultProps> = ({
                   <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-1">
                     Nomor Induk Kependudukan (NIK)
                   </span>
-                  <p className="text-xl font-black tracking-wider text-[#1CB0F6]">
+                  <p className="text-lg font-black tracking-wider text-[#1CB0F6]">
                     {result.nik_masked}
                   </p>
                   <span className="text-[10px] text-slate-400 font-medium">
-                    Digit tengah disamarkan sesuai perlindungan privasi
+                    Digit tengah disamarkan untuk privasi
                   </span>
                 </div>
               </div>
 
               {/* Dusun, RT/RW, TPS, Status */}
               <div className="bg-slate-50 rounded-2xl border-2 border-slate-200 p-5 divide-y-2 divide-slate-200">
+                <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nomor Urut DPT:</span>
+                  <span className="text-sm font-black font-mono text-[#1899D6]">
+                    No. {result.no_dpt ? String(result.no_dpt) : '-'}
+                  </span>
+                </div>
+
                 <div className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Alamat / Dusun:</span>
                   <span className="text-sm font-black text-slate-900">{result.dusun}</span>
@@ -168,7 +191,7 @@ export const SearchResult: React.FC<SearchResultProps> = ({
                 <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
                   <a
                     href={`https://wa.me/?text=${encodeURIComponent(
-                      `Halo, saya telah mengecek data DPS Pilkades Desa Gunungjaya 2026. Nama: ${result.nama} terdaftar di ${result.tps}, Dusun: ${result.dusun}. Ayo cek hak pilih Anda di portal resmi Pilkades Gunungjaya!`
+                      `Halo, saya telah mengecek data DPS Pilkades Desa Gunungjaya 2026. Nama: ${result.nama} (No. DPT: ${result.no_dpt ? `#${result.no_dpt}` : '-'}) terdaftar di ${result.tps}, Dusun: ${result.dusun}. Ayo cek hak pilih Anda di portal resmi Pilkades Gunungjaya!`
                     )}`}
                     target="_blank"
                     rel="noopener noreferrer"

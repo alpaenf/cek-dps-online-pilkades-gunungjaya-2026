@@ -27,9 +27,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class AdminVoterController extends Controller
 {
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
         $validated = $request->validate([
+            'no_urut' => ['nullable', 'integer', 'min:1'],
             'nik' => ['required', 'digits:16', 'unique:voters,nik'],
             'nama' => ['required', 'string', 'max:150'],
             'jenis_kelamin' => ['required', Rule::in(['L', 'P'])],
@@ -57,22 +58,28 @@ class AdminVoterController extends Controller
             $validated['status'] = 'DPS';
         }
 
+        if (empty($validated['no_urut'])) {
+            $maxNo = Voter::max('no_urut') ?? 0;
+            $validated['no_urut'] = $maxNo + 1;
+        }
+
         $voter = Voter::create($validated);
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Pemilih {$voter->nama} (NIK: {$voter->nik}) berhasil ditambahkan ke DPS!",
+                'message' => "Pemilih {$voter->nama} (No. DPT #{$voter->no_urut}, NIK: {$voter->nik}) berhasil ditambahkan ke DPS!",
                 'voter' => $voter,
             ]);
         }
 
-        return redirect()->back()->with('success', "Pemilih {$validated['nama']} (NIK: {$validated['nik']}) berhasil ditambahkan ke DPS!");
+        return redirect()->back()->with('success', "Pemilih {$validated['nama']} (No. DPT #{$voter->no_urut}) berhasil ditambahkan ke DPS!");
     }
 
     public function update(Request $request, Voter $voter): RedirectResponse
     {
         $validated = $request->validate([
+            'no_urut' => ['nullable', 'integer', 'min:1'],
             'nik' => ['required', 'digits:16', Rule::unique('voters', 'nik')->ignore($voter->id)],
             'nama' => ['required', 'string', 'max:150'],
             'jenis_kelamin' => ['required', Rule::in(['L', 'P'])],
@@ -276,6 +283,13 @@ class AdminVoterController extends Controller
                     continue;
                 }
 
+                if (empty($normalized['no_urut'])) {
+                    $itemNo = $item['no_dpt'] ?? $item['no_urut'] ?? $item['no'] ?? null;
+                    if (is_numeric($itemNo) && (int) $itemNo > 0) {
+                        $normalized['no_urut'] = (int) $itemNo;
+                    }
+                }
+
                 $existing = Voter::where('nik', $normalized['nik'])->first();
                 if ($existing) {
                     if ($updateExisting) {
@@ -371,6 +385,7 @@ class AdminVoterController extends Controller
             $emptyRowsCount = 0;
             $seenVotersInFile = [];
             $duplicateRows = [];
+            $cleanCounter = 0;
             $allTps = Tps::all()->keyBy('id');
 
             for ($i = $dataStartIndex; $i < count($rawRows); $i++) {
@@ -391,6 +406,11 @@ class AdminVoterController extends Controller
                     $skipped++;
 
                     continue;
+                }
+
+                $cleanCounter++;
+                if (empty($normalized['no_urut'])) {
+                    $normalized['no_urut'] = $cleanCounter;
                 }
 
                 $nik = $normalized['nik'];

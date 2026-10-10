@@ -46,6 +46,7 @@ interface ImportVoterModalProps {
 interface ParsedVoterRow {
   rowNumber: number;
   no_dpt?: string | number;
+  no_urut?: string | number;
   no?: string | number;
   nik: string;
   nama: string;
@@ -605,10 +606,19 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
               });
             }
 
+            const sequentialNo = validVoters.length + 1;
+            let resolvedNoDpt: number | string = sequentialNo;
+            if (item.no_dpt && !isNaN(Number(item.no_dpt)) && Number(item.no_dpt) > 0) {
+              resolvedNoDpt = Number(item.no_dpt);
+            } else if (item.no && !isNaN(Number(item.no)) && Number(item.no) > 0) {
+              resolvedNoDpt = Number(item.no);
+            }
+
             validVoters.push({
               rowNumber,
-              no_dpt: item.no_dpt || '',
-              no: item.no || '',
+              no_dpt: resolvedNoDpt,
+              no_urut: resolvedNoDpt,
+              no: resolvedNoDpt,
               nik: nikResult.nik,
               nama,
               jenis_kelamin: item.jenis_kelamin || 'L',
@@ -2028,23 +2038,31 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                         </span>
                       </div>
                       <div className="overflow-x-auto max-h-60">
-                        <table className="w-full text-left text-xs border-collapse min-w-[650px]">
+                        <table className="w-full text-left text-xs border-collapse min-w-[720px]">
                           <thead className="bg-slate-50 text-slate-500 font-black text-[10px] uppercase border-b border-slate-200 sticky top-0">
                             <tr>
-                              <th className="py-2.5 px-3">Baris</th>
+                              <th className="py-2.5 px-3 text-center">No. DPT</th>
+                              <th className="py-2.5 px-3">Baris Excel</th>
                               <th className="py-2.5 px-3">NIK (16 Digit)</th>
                               <th className="py-2.5 px-3">Nama Pemilih</th>
-                              <th className="py-2.5 px-3">JK</th>
+                              <th className="py-2.5 px-3 text-center">JK</th>
                               <th className="py-2.5 px-3">Tempat / Tgl Lahir</th>
                               <th className="py-2.5 px-3">Dusun / RT / RW</th>
                               <th className="py-2.5 px-3">TPS</th>
-                              <th className="py-2.5 px-3">Status</th>
+                              <th className="py-2.5 px-3 text-center">Status</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100 font-medium bg-white">
                             {validParsedRows.slice(0, 5).map((row, idx) => (
                               <tr key={idx} className="hover:bg-slate-50">
-                                <td className="py-2.5 px-3 font-bold text-slate-500">#{row.rowNumber}</td>
+                                <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                                  <span className="font-mono font-black px-2 py-0.5 rounded-lg text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 shadow-2xs">
+                                    #{row.no_dpt || (idx + 1)}
+                                  </span>
+                                </td>
+                                <td className="py-2.5 px-3 font-bold text-slate-400 whitespace-nowrap">
+                                  Baris #{row.rowNumber}
+                                </td>
                                 <td className="py-2.5 px-3">
                                   <span className="font-mono font-bold px-2 py-0.5 rounded-lg text-[11px] bg-slate-100 text-slate-800">
                                     {row.nik}
@@ -2053,7 +2071,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                                 <td className="py-2.5 px-3 font-black text-slate-900 uppercase">
                                   {row.nama}
                                 </td>
-                                <td className="py-2.5 px-3">
+                                <td className="py-2.5 px-3 text-center">
                                   <span
                                     className={`px-2 py-0.5 rounded-lg font-black text-[10px] ${
                                       row.jenis_kelamin?.toUpperCase().startsWith('P')
@@ -2073,7 +2091,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                                 <td className="py-2.5 px-3 font-black text-[#1CB0F6]">
                                   {row.tps || 'Auto'}
                                 </td>
-                                <td className="py-2.5 px-3">
+                                <td className="py-2.5 px-3 text-center">
                                   <span className="px-2 py-0.5 rounded-lg font-black text-[10px] bg-emerald-100 text-emerald-700">
                                     {row.status || 'AKTIF'}
                                   </span>

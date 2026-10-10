@@ -202,6 +202,7 @@ class DpsSearchController extends Controller
             'found' => true,
             'nama' => $voter->nama,
             'nik_masked' => $voter->masked_nik,
+            'no_dpt' => $voter->no_urut ?? $voter->id,
             'dusun' => $voter->dusun,
             'rt' => $voter->rt,
             'rw' => $voter->rw,

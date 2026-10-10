@@ -294,6 +294,7 @@ export default function AdminDashboard({
 
   // Form Voter
   const voterForm = useForm({
+    no_urut: '' as number | string,
     nik: '',
     nama: '',
     jenis_kelamin: 'L',
@@ -380,6 +381,7 @@ export default function AdminDashboard({
     setEditingVoter(null);
     voterForm.reset();
     voterForm.setData({
+      no_urut: '',
       nik: '',
       nama: '',
       jenis_kelamin: 'L',
@@ -399,6 +401,7 @@ export default function AdminDashboard({
   const openEditVoter = (voter: VoterItem) => {
     setEditingVoter(voter);
     voterForm.setData({
+      no_urut: voter.no_urut ?? '',
       nik: voter.nik,
       nama: voter.nama,
       jenis_kelamin: voter.jenis_kelamin,
@@ -974,6 +977,7 @@ export default function AdminDashboard({
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-50 text-slate-600 border-b-2 border-slate-200 uppercase text-[11px] font-black">
+                    <th className="py-3.5 px-3 text-center w-16">No. DPT</th>
                     <th className="py-3.5 px-4">NIK & Pemilih</th>
                     <th className="py-3.5 px-3 text-center">L/P</th>
                     <th className="py-3.5 px-4">Alamat / Dusun</th>
@@ -985,13 +989,18 @@ export default function AdminDashboard({
                 <tbody className="divide-y-2 divide-slate-100">
                   {voters.data.length === 0 ? (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400 font-bold">
+                      <td colSpan={7} className="py-8 text-center text-slate-400 font-bold">
                         Tidak ada data pemilih yang sesuai dengan pencarian atau filter.
                       </td>
                     </tr>
                   ) : (
                     voters.data.map((voter) => (
                       <tr key={voter.id} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3.5 px-3 text-center">
+                          <span className="font-mono font-black text-xs px-2 py-1 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 block shadow-2xs">
+                            #{voter.no_urut || voter.id}
+                          </span>
+                        </td>
                         <td className="py-3.5 px-4">
                           <span className="font-black text-slate-900 text-sm block">
                             {voter.nama}
@@ -1071,9 +1080,14 @@ export default function AdminDashboard({
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <span className="font-black text-slate-900 text-sm block">
-                          {voter.nama}
-                        </span>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="font-mono font-black text-[10px] px-1.5 py-0.5 rounded-md bg-slate-200 text-slate-700">
+                            #{voter.no_urut || voter.id}
+                          </span>
+                          <span className="font-black text-slate-900 text-sm">
+                            {voter.nama}
+                          </span>
+                        </div>
                         <span className="text-xs font-black text-[#1CB0F6] tracking-wider block">
                           {voter.nik}
                         </span>
@@ -1997,24 +2011,45 @@ export default function AdminDashboard({
             </div>
 
             <form onSubmit={submitVoter} className="space-y-4">
-              <div>
-                <label className="block text-xs font-black uppercase text-slate-700 mb-1">
-                  Nomor Induk Kependudukan (NIK 16 Digit) *
-                </label>
-                <input
-                  type="text"
-                  maxLength={16}
-                  value={voterForm.data.nik}
-                  onChange={(e) => voterForm.setData('nik', e.target.value.replace(/\D/g, ''))}
-                  placeholder="332709xxxxxxxxxx"
-                  required
-                  className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl text-xs font-extrabold tracking-wider text-slate-900 focus:outline-none focus:border-[#58CC02]"
-                />
-                {voterForm.errors.nik && (
-                  <span className="text-[10px] text-[#EA2B2B] font-bold block mt-1">
-                    {voterForm.errors.nik}
-                  </span>
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-1">
+                  <label className="block text-xs font-black uppercase text-slate-700 mb-1">
+                    No. DPT (Opsional)
+                  </label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={voterForm.data.no_urut}
+                    onChange={(e) => voterForm.setData('no_urut', e.target.value ? Number(e.target.value) : '')}
+                    placeholder="Auto (1, 2...)"
+                    className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl text-xs font-extrabold tracking-wider text-slate-900 focus:outline-none focus:border-[#58CC02]"
+                  />
+                  {voterForm.errors.no_urut && (
+                    <span className="text-[10px] text-[#EA2B2B] font-bold block mt-1">
+                      {voterForm.errors.no_urut}
+                    </span>
+                  )}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-black uppercase text-slate-700 mb-1">
+                    NIK 16 Digit *
+                  </label>
+                  <input
+                    type="text"
+                    maxLength={16}
+                    value={voterForm.data.nik}
+                    onChange={(e) => voterForm.setData('nik', e.target.value.replace(/\D/g, ''))}
+                    placeholder="332709xxxxxxxxxx"
+                    required
+                    className="w-full px-3 py-2 bg-slate-50 border-2 border-slate-200 rounded-xl text-xs font-extrabold tracking-wider text-slate-900 focus:outline-none focus:border-[#58CC02]"
+                  />
+                  {voterForm.errors.nik && (
+                    <span className="text-[10px] text-[#EA2B2B] font-bold block mt-1">
+                      {voterForm.errors.nik}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div>
