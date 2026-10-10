@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\ImportDuplicateVoter;
+use App\Models\PendingSkippedVoter;
 use App\Models\Tps;
 use App\Models\User;
 use App\Models\Voter;
@@ -188,5 +190,92 @@ class AdminManagementTest extends TestCase
             'key' => 'data_phase',
             'value' => 'DPT',
         ]);
+    }
+
+    public function test_admin_cannot_reset_voter_data_with_incorrect_password(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'password' => bcrypt('correct-password'),
+        ]);
+
+        $tps = Tps::create([
+            'nomor_tps' => 'TPS 01',
+            'nama_lokasi' => 'Balai Desa',
+            'dusun' => 'Krajan',
+        ]);
+
+        Voter::create([
+            'nik' => '3327090101900001',
+            'nama' => 'Budi Santoso',
+            'jenis_kelamin' => 'L',
+            'tps_id' => $tps->id,
+            'dusun' => 'Krajan',
+            'status' => 'DPS',
+        ]);
+
+        $response = $this->actingAs($admin)->post('/admin/voters/reset-all', [
+            'password' => 'wrong-password',
+        ]);
+
+        $response->assertSessionHasErrors('password');
+        $this->assertDatabaseCount('voters', 1);
+    }
+
+    public function test_admin_can_reset_all_voter_data_with_valid_password(): void
+    {
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'password' => bcrypt('password123'),
+        ]);
+
+        $tps = Tps::create([
+            'nomor_tps' => 'TPS 01',
+            'nama_lokasi' => 'Balai Desa',
+            'dusun' => 'Krajan',
+        ]);
+
+        Voter::create([
+            'nik' => '3327090101900001',
+            'nama' => 'Budi Santoso',
+            'jenis_kelamin' => 'L',
+            'tps_id' => $tps->id,
+            'dusun' => 'Krajan',
+            'status' => 'DPS',
+        ]);
+
+        ImportDuplicateVoter::create([
+            'row_number' => 8,
+            'nik' => '3327090101900001',
+            'nama' => 'Budi Santoso Duplikat',
+            'tps_id' => $tps->id,
+            'tps_name' => 'TPS 01',
+            'first_seen_row_number' => 7,
+            'first_seen_name' => 'Budi Santoso',
+            'status_match' => 'IDENTIK',
+        ]);
+
+        PendingSkippedVoter::create([
+            'row_number' => 12,
+            'nama' => 'Calon Belum Lengkap',
+            'nik' => '3327090101900099',
+            'tps_id' => $tps->id,
+        ]);
+
+        $this->assertDatabaseCount('voters', 1);
+        $this->assertDatabaseCount('import_duplicate_voters', 1);
+        $this->assertDatabaseCount('pending_skipped_voters', 1);
+
+        $response = $this->actingAs($admin)->post('/admin/voters/reset-all', [
+            'password' => 'password123',
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseCount('voters', 0);
+        $this->assertDatabaseCount('import_duplicate_voters', 0);
+        $this->assertDatabaseCount('pending_skipped_voters', 0);
+        // TPS and Admin user must remain intact
+        $this->assertDatabaseCount('tps', 1);
+        $this->assertDatabaseCount('users', 1);
     }
 }

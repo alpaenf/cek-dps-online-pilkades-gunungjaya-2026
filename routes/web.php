@@ -73,6 +73,9 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->group(function () {
     Route::get('/profile', [AdminProfileController::class, 'edit'])->name('admin.profile.edit');
     Route::patch('/profile', [AdminProfileController::class, 'update'])->name('admin.profile.update');
 
+    // Reset / Hapus Seluruh Data Pemilih (DPS, Ganda, Terlewat) dengan Konfirmasi Password Akun
+    Route::post('/voters/reset-all', [AdminProfileController::class, 'resetVoterData'])->name('admin.voters.resetAll');
+
     // Pengaturan Redaksi Maskot & Slogan Pilkades
     Route::post('/settings/mascot', [AdminDashboardController::class, 'updateMascotSettings'])->name('admin.settings.mascot');
 });

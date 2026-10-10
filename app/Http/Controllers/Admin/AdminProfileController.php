@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
+use App\Models\ImportDuplicateVoter;
+use App\Models\PendingSkippedVoter;
+use App\Models\Voter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -18,12 +22,22 @@ class AdminProfileController extends Controller
         $user = $request->user();
         $whatsappPanitia = AppSetting::get('whatsapp_panitia', '6285226123456');
 
+        $totalDps = Voter::count();
+        $totalDuplicates = ImportDuplicateVoter::count();
+        $totalPending = PendingSkippedVoter::count();
+
         return Inertia::render('Admin/Profile', [
             'adminUser' => [
                 'name' => $user->name,
                 'email' => $user->email,
             ],
             'whatsappPanitia' => (string) $whatsappPanitia,
+            'statsSummary' => [
+                'totalDps' => $totalDps,
+                'totalDuplicates' => $totalDuplicates,
+                'totalPending' => $totalPending,
+                'totalAll' => $totalDps + $totalDuplicates + $totalPending,
+            ],
             'status' => session('status'),
         ]);
     }
@@ -84,5 +98,27 @@ class AdminProfileController extends Controller
         AppSetting::set('whatsapp_panitia', $cleanPhone, 'text', 'Nomor WhatsApp Resmi Panitia Pilkades');
 
         return redirect()->route('admin.profile.edit')->with('success', 'Pengaturan nomor WhatsApp, email, dan password berhasil disimpan!');
+    }
+
+    /**
+     * Reset / Hapus seluruh data pemilih (DPS, data ganda, dan data terlewat).
+     * Memerlukan konfirmasi password email akun administrator.
+     */
+    public function resetVoterData(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'password' => ['required', 'current_password'],
+        ], [
+            'password.required' => 'Masukkan kata sandi akun Anda untuk mengonfirmasi penghapusan seluruh data.',
+            'password.current_password' => 'Kata sandi yang Anda masukkan salah. Reset data dibatalkan demi keamanan.',
+        ]);
+
+        DB::transaction(function () {
+            Voter::query()->delete();
+            ImportDuplicateVoter::query()->delete();
+            PendingSkippedVoter::query()->delete();
+        });
+
+        return redirect()->route('admin.profile.edit')->with('success', 'Seluruh data pemilih (DPS), riwayat data ganda, dan data terlewat berhasil direset bersih (0 data)!');
     }
 }

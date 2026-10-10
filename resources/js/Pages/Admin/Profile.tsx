@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
   ShieldCheck,
@@ -13,7 +13,16 @@ import {
   Save,
   MessageCircle,
   KeyRound,
-  Info
+  Info,
+  Trash2,
+  AlertTriangle,
+  X,
+  Database,
+  Copy,
+  ClipboardList,
+  ShieldAlert,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { DEFAULT_VILLAGE_LOGO } from '@/data/logoPresets';
 import { PageProps } from '@/types';
@@ -24,15 +33,23 @@ interface AdminProfileProps {
     email: string;
   };
   whatsappPanitia: string;
+  statsSummary?: {
+    totalDps: number;
+    totalDuplicates: number;
+    totalPending: number;
+    totalAll: number;
+  };
   status?: string;
 }
 
 export default function AdminProfile({
   adminUser,
-  whatsappPanitia
+  whatsappPanitia,
+  statsSummary = { totalDps: 0, totalDuplicates: 0, totalPending: 0, totalAll: 0 }
 }: AdminProfileProps) {
   const { flash } = usePage<PageProps>().props;
 
+  // Form Profil & Password Admin
   const { data, setData, patch, processing, errors, recentlySuccessful, reset } = useForm({
     email: adminUser.email,
     whatsapp_panitia: whatsappPanitia,
@@ -41,11 +58,42 @@ export default function AdminProfile({
     new_password_confirmation: '',
   });
 
+  // Form Reset Data Pemilih
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const resetVoterForm = useForm({
+    password: '',
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     patch(route('admin.profile.update'), {
       onSuccess: () => {
         reset('current_password', 'new_password', 'new_password_confirmation');
+      },
+    });
+  };
+
+  const handleOpenResetModal = () => {
+    resetVoterForm.reset();
+    resetVoterForm.clearErrors();
+    setIsResetModalOpen(true);
+  };
+
+  const handleCloseResetModal = () => {
+    if (resetVoterForm.processing) return;
+    setIsResetModalOpen(false);
+    resetVoterForm.reset();
+    resetVoterForm.clearErrors();
+  };
+
+  const handleConfirmResetData = (e: React.FormEvent) => {
+    e.preventDefault();
+    resetVoterForm.post(route('admin.voters.resetAll'), {
+      onSuccess: () => {
+        setIsResetModalOpen(false);
+        resetVoterForm.reset();
       },
     });
   };
@@ -80,7 +128,7 @@ export default function AdminProfile({
                   PENGATURAN PROFIL
                 </h1>
                 <p className="hidden md:block text-[11px] font-semibold text-slate-500 truncate leading-none mt-0.5">
-                  Ubah Nomor WhatsApp, Email, & Password Admin
+                  Ubah WhatsApp, Email, Password, & Manajemen Database
                 </p>
               </div>
             </div>
@@ -118,7 +166,7 @@ export default function AdminProfile({
           <div className="p-4 rounded-2xl bg-[#E5F9D2] border-2 border-[#58CC02] text-[#46A302] font-black text-sm flex items-center justify-between shadow-xs">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-5 h-5 shrink-0" />
-              <span>{flash?.success || 'Pengaturan nomor WhatsApp, email, dan password berhasil disimpan!'}</span>
+              <span>{flash?.success || 'Pengaturan berhasil disimpan!'}</span>
             </div>
           </div>
         )}
@@ -345,7 +393,214 @@ export default function AdminProfile({
             </button>
           </div>
         </form>
+
+        {/* ========================================================================= */}
+        {/* CARD 4: ZONA BAHAYA - RESET & HAPUS SEMUA DATA PEMILIH (DPS / EXCEL) */}
+        {/* ========================================================================= */}
+        <div className="bg-white border-2 border-b-4 border-rose-200 rounded-3xl p-6 sm:p-8 space-y-5 shadow-sm">
+          <div className="flex items-start justify-between gap-4 pb-4 border-b-2 border-rose-100 flex-wrap sm:flex-nowrap">
+            <div className="flex items-start gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-[#FFE5E5] text-[#FF4B4B] flex items-center justify-center shrink-0 border border-rose-200">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
+                    Zona Bahaya: Reset Seluruh Data Pemilih
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-md bg-rose-100 text-[#EA2B2B] text-[10px] font-black uppercase tracking-wider">
+                    Danger Zone
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-1 leading-relaxed">
+                  Kosongkan atau hapus semua data pemilih (DPS), riwayat data ganda, dan data terlewat untuk mengembalikan status database ke <strong>0 data bersih</strong>. Anda dapat meng-import file Excel baru setelah direset.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Mini Status Card Data Saat Ini */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="p-3.5 rounded-2xl bg-slate-50 border-2 border-slate-200 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                  Data DPS Aktif
+                </span>
+                <span className="text-lg font-black text-slate-800">
+                  {statsSummary.totalDps.toLocaleString('id-ID')} orang
+                </span>
+              </div>
+              <div className="w-8 h-8 rounded-xl bg-green-100 text-[#58CC02] flex items-center justify-center">
+                <Database className="w-4 h-4" />
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 border-2 border-slate-200 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                  Riwayat Data Ganda
+                </span>
+                <span className="text-lg font-black text-slate-800">
+                  {statsSummary.totalDuplicates.toLocaleString('id-ID')} NIK
+                </span>
+              </div>
+              <div className="w-8 h-8 rounded-xl bg-sky-100 text-[#1CB0F6] flex items-center justify-center">
+                <Copy className="w-4 h-4" />
+              </div>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-slate-50 border-2 border-slate-200 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">
+                  Data Terlewat (Draf)
+                </span>
+                <span className="text-lg font-black text-slate-800">
+                  {statsSummary.totalPending.toLocaleString('id-ID')} orang
+                </span>
+              </div>
+              <div className="w-8 h-8 rounded-xl bg-amber-100 text-[#FF9600] flex items-center justify-center">
+                <ClipboardList className="w-4 h-4" />
+              </div>
+            </div>
+          </div>
+
+          {/* Alert Security Warning & Reset Button */}
+          <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-rose-50/70 border border-rose-200">
+            <div className="flex items-center gap-2.5 text-xs text-rose-900 font-bold">
+              <ShieldAlert className="w-5 h-5 text-[#EA2B2B] shrink-0" />
+              <span>Memerlukan verifikasi password email akun admin ({adminUser.email}) sebelum eksekusi.</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleOpenResetModal}
+              className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-[#FF4B4B] hover:bg-[#e03d3d] text-white font-black text-xs uppercase tracking-wider border-b-4 border-[#EA2B2B] active:border-b-0 active:translate-y-1 transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer shrink-0"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Reset Semua Data (0 Data)</span>
+            </button>
+          </div>
+        </div>
       </main>
+
+      {/* ========================================================================= */}
+      {/* MODAL KONFIRMASI RESET DATA PEMILIH DENGAN PASSWORD ADMIN */}
+      {/* ========================================================================= */}
+      {isResetModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="relative w-full max-w-lg bg-white rounded-3xl border-2 border-b-4 border-rose-300 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-150">
+            
+            {/* Header Modal */}
+            <div className="p-5 sm:p-6 bg-gradient-to-r from-rose-500 to-red-600 text-white flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-white/20 border border-white/30 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-rose-200 block">
+                    Konfirmasi Keamanan Tinggi
+                  </span>
+                  <h3 className="text-lg sm:text-xl font-black tracking-tight">
+                    Reset Seluruh Data Pemilih?
+                  </h3>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleCloseResetModal}
+                disabled={resetVoterForm.processing}
+                className="p-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Form Konfirmasi Password */}
+            <form onSubmit={handleConfirmResetData} className="p-5 sm:p-7 space-y-5">
+              
+              {/* Alert Peringatan Hapus */}
+              <div className="p-4 rounded-2xl bg-[#FFE5E5] border-2 border-[#FF4B4B]/30 text-xs sm:text-sm text-[#EA2B2B] font-bold space-y-2">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    <strong>PERHATIAN:</strong> Tindakan ini bersifat permanen dan tidak dapat dibatalkan.
+                  </p>
+                </div>
+                <ul className="list-disc pl-7 space-y-1 text-xs text-rose-900 font-semibold">
+                  <li><strong>{statsSummary.totalDps.toLocaleString('id-ID')} Data DPS</strong> akan dihapus bersih (menjadi 0).</li>
+                  <li><strong>{statsSummary.totalDuplicates.toLocaleString('id-ID')} Data NIK Ganda</strong> akan dihapus.</li>
+                  <li><strong>{statsSummary.totalPending.toLocaleString('id-ID')} Data Terlewat</strong> akan dibersihkan.</li>
+                  <li>Data master Lokasi TPS & akun Administrator tetap aman (tidak terhapus).</li>
+                </ul>
+              </div>
+
+              {/* Input Password Akun */}
+              <div>
+                <label htmlFor="reset_password" className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1.5">
+                  Masukkan Password Akun Admin ({adminUser.email}) *
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Lock className="w-4 h-4 text-[#FF4B4B]" />
+                  </div>
+                  <input
+                    id="reset_password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={resetVoterForm.data.password}
+                    onChange={(e) => resetVoterForm.setData('password', e.target.value)}
+                    placeholder="Ketik kata sandi akun admin Anda"
+                    required
+                    autoFocus
+                    disabled={resetVoterForm.processing}
+                    className={`w-full pl-10 pr-12 py-3.5 bg-slate-50 border-2 rounded-2xl text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:bg-white transition-all ${
+                      resetVoterForm.errors.password ? 'border-[#FF4B4B] bg-[#FFE5E5]' : 'border-slate-200 focus:border-[#FF4B4B]'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+
+                {resetVoterForm.errors.password && (
+                  <p className="text-xs font-bold text-[#EA2B2B] mt-1.5 flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{resetVoterForm.errors.password}</span>
+                  </p>
+                )}
+                <p className="text-[11px] text-slate-400 font-medium mt-1">
+                  Verifikasi keamanan untuk memastikan hanya admin resmi yang dapat mereset data.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-3 border-t-2 border-slate-100">
+                <button
+                  type="button"
+                  onClick={handleCloseResetModal}
+                  disabled={resetVoterForm.processing}
+                  className="px-5 py-3 rounded-2xl bg-white hover:bg-slate-100 text-slate-700 font-bold border-2 border-slate-200 text-xs uppercase tracking-wider cursor-pointer transition-all disabled:opacity-50"
+                >
+                  Batal
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={resetVoterForm.processing || !resetVoterForm.data.password}
+                  className="px-6 py-3 rounded-2xl bg-[#FF4B4B] hover:bg-[#e03d3d] text-white font-black text-xs uppercase tracking-wider border-b-4 border-[#EA2B2B] active:border-b-0 active:translate-y-1 transition-all shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>{resetVoterForm.processing ? 'Sedang Mereset Data...' : 'Ya, Hapus Semua Data Sekarang'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
