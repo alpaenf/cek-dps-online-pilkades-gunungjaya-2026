@@ -317,18 +317,25 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
     setHeaderColumns([]);
     setFileStats(null);
     setSkippedInParsing([]);
+    setDuplicateInParsing([]);
+    setAllSkippedRows([]);
 
     const reader = new FileReader();
 
     reader.onload = (e) => {
-      try {
-        const buffer = e.target?.result as ArrayBuffer;
-        const workbook = XLSX.read(buffer, {
-          type: 'array',
-          cellDates: true,
-          cellNF: false,
-          cellText: true,
-        });
+      setTimeout(() => {
+        try {
+          const buffer = e.target?.result as ArrayBuffer;
+          if (!buffer || buffer.byteLength === 0) {
+            throw new Error('Berkas kosong atau tidak dapat dibaca.');
+          }
+
+          const workbook = XLSX.read(buffer, {
+            type: 'array',
+            cellDates: true,
+            cellNF: false,
+            cellText: true,
+          });
 
         if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
           throw new Error('File Excel tidak memiliki lembar kerja (sheet).');
@@ -697,6 +704,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
         setIsParsing(false);
         setParseError(err.message || 'Terjadi kesalahan saat memproses berkas Excel.');
       }
+      }, 50);
     };
 
     reader.onerror = () => {
@@ -1220,9 +1228,12 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
 
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto overflow-x-hidden">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto overflow-x-hidden notranslate"
+      translate="no"
+    >
       <div className="fixed inset-0 -z-10" onClick={handleClose} aria-hidden="true" />
-      <div className="relative bg-white border-2 border-b-4 border-slate-200 rounded-2xl sm:rounded-3xl max-w-4xl w-full p-3.5 sm:p-8 space-y-4 sm:space-y-6 shadow-2xl my-auto max-h-[92vh] flex flex-col min-w-0 overflow-hidden z-10">
+      <div className="relative bg-white border-2 border-b-4 border-slate-200 rounded-2xl sm:rounded-3xl max-w-4xl w-full p-3.5 sm:p-8 space-y-4 sm:space-y-6 shadow-2xl my-auto max-h-[92vh] flex flex-col min-w-0 overflow-hidden z-10 notranslate" translate="no">
         
         {/* Header Modal */}
         <div className="flex items-center justify-between gap-3 pb-3 sm:pb-4 border-b-2 border-slate-100 shrink-0">
@@ -1255,7 +1266,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
           
           {/* HASIL SUKSES & REKONSILIASI ANGKA LENGKAP */}
           {importResult ? (
-            <div className="space-y-4">
+            <div key="import-result-view" className="space-y-4">
               <div className="bg-[#58CC02]/10 border-2 border-[#58CC02] rounded-2xl sm:rounded-3xl p-4 sm:p-6 text-center space-y-4">
                 <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#58CC02] text-white flex items-center justify-center mx-auto shadow-md animate-bounce">
                   <Check className="w-7 h-7 sm:w-9 sm:h-9 stroke-[3]" />
@@ -1304,13 +1315,28 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                     <HelpCircle className="w-4 h-4 text-[#1CB0F6]" />
                     <span>Rekonsiliasi Angka & Penjelasan Selisih Data:</span>
                   </div>
-                  <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                    • <strong>Total Baris File:</strong> {importResult.totalRowsInFile.toLocaleString('id-ID')} baris (sampai baris data pemilih terakhir).<br />
-                    • <strong>Baris Header / Judul Kolom:</strong> {importResult.nonDataRowsCount.toLocaleString('id-ID')} baris (dilewati otomatis).<br />
-                    • <strong>Pemilih Baru Masuk DPS:</strong> {importResult.inserted.toLocaleString('id-ID')} orang (NIK unik berbeda).<br />
-                    • <strong>Data Ganda di File (Diperbarui):</strong> {importResult.updated.toLocaleString('id-ID')} baris (NIK duplikat disinkronkan).<br />
-                    • <strong>Data Terlewat (Perlu Dilengkapi):</strong> {importResult.skipped.toLocaleString('id-ID')} baris (NIK/nama tidak lengkap).
-                  </p>
+                  <div className="text-[11px] text-slate-600 leading-relaxed font-medium space-y-1">
+                    <div className="flex items-start gap-1.5">
+                      <span className="font-bold">•</span>
+                      <span><strong>Total Baris File:</strong> {`${importResult.totalRowsInFile.toLocaleString('id-ID')} baris (sampai baris data pemilih terakhir).`}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <span className="font-bold">•</span>
+                      <span><strong>Baris Header / Judul Kolom:</strong> {`${importResult.nonDataRowsCount.toLocaleString('id-ID')} baris (dilewati otomatis).`}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <span className="font-bold">•</span>
+                      <span><strong>Pemilih Baru Masuk DPS:</strong> {`${importResult.inserted.toLocaleString('id-ID')} orang (NIK unik berbeda).`}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <span className="font-bold">•</span>
+                      <span><strong>Data Ganda di File (Diperbarui):</strong> {`${importResult.updated.toLocaleString('id-ID')} baris (NIK duplikat disinkronkan).`}</span>
+                    </div>
+                    <div className="flex items-start gap-1.5">
+                      <span className="font-bold">•</span>
+                      <span><strong>Data Terlewat (Perlu Dilengkapi):</strong> {`${importResult.skipped.toLocaleString('id-ID')} baris (NIK/nama tidak lengkap).`}</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -1614,7 +1640,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
               )}
             </div>
           ) : (
-            <>
+            <div key="import-form-view" className="space-y-4 sm:space-y-6">
               {/* Info banner & Download Template */}
               <div className="bg-slate-50 border-2 border-slate-200 rounded-2xl sm:rounded-3xl p-3 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 min-w-0">
                 <div className="flex items-start gap-2.5 sm:gap-3 min-w-0">
@@ -1673,6 +1699,17 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                 <label className="block text-xs font-black uppercase text-slate-700 mb-2">
                   Pilih Berkas Excel DPS (.xlsx / .xls / .csv)
                 </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".xlsx, .xls, .csv"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleFileChange(e.target.files[0]);
+                    }
+                  }}
+                />
                 <div
                   onClick={() => fileInputRef.current?.click()}
                   className={`border-2 border-dashed rounded-2xl sm:rounded-3xl p-4 sm:p-8 text-center cursor-pointer transition-all ${
@@ -1681,33 +1718,21 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                       : 'border-slate-300 hover:border-[#58CC02] hover:bg-slate-50'
                   }`}
                 >
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".xlsx, .xls, .csv"
-                    className="hidden"
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        handleFileChange(e.target.files[0]);
-                      }
-                    }}
-                  />
-
                   <div className="flex flex-col items-center justify-center gap-2">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center text-slate-600 shadow-sm">
                       <Upload className="w-5 h-5 sm:w-6 sm:h-6 text-[#58CC02]" />
                     </div>
                     {selectedFile ? (
-                      <div className="space-y-1 max-w-full px-2">
+                      <div key="file-selected-info" className="space-y-1 max-w-full px-2">
                         <span className="text-xs sm:text-sm font-black text-slate-900 block truncate">
                           {selectedFile.name}
                         </span>
                         <span className="text-[11px] sm:text-xs text-slate-500 font-bold block">
-                          {(selectedFile.size / 1024).toFixed(1)} KB • Klik untuk ganti berkas
+                          {`${(selectedFile.size / 1024).toFixed(1)} KB • Klik untuk ganti berkas`}
                         </span>
                       </div>
                     ) : (
-                      <div className="space-y-1 max-w-full px-2">
+                      <div key="file-empty-info" className="space-y-1 max-w-full px-2">
                         <span className="text-xs sm:text-sm font-black text-slate-800 block">
                           Tarik berkas Excel ke sini atau klik untuk memilih
                         </span>
@@ -1722,7 +1747,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
 
               {/* Indikator Parsing */}
               {isParsing && (
-                <div className="flex items-center justify-center gap-2.5 py-3 text-[#58CC02] text-center">
+                <div key="parsing-indicator-box" className="flex items-center justify-center gap-2.5 py-3 text-[#58CC02] text-center">
                   <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
                   <span className="text-xs font-black uppercase tracking-wider">
                     Sedang membaca struktur tabel dan baris pemilih...
@@ -1732,14 +1757,14 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
 
               {/* Pesan Kesalahan Parse */}
               {parseError && (
-                <div className="bg-[#FFE5E5] border-2 border-[#EA2B2B] rounded-2xl p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3 text-[#EA2B2B]">
+                <div key="parse-error-box" className="bg-[#FFE5E5] border-2 border-[#EA2B2B] rounded-2xl p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3 text-[#EA2B2B]">
                   <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                   <div className="text-xs font-bold leading-relaxed">{parseError}</div>
                 </div>
               )}
 
               {directUploadError && (
-                <div className="bg-[#FFE5E5] border-2 border-[#EA2B2B] rounded-2xl p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3 text-[#EA2B2B]">
+                <div key="direct-error-box" className="bg-[#FFE5E5] border-2 border-[#EA2B2B] rounded-2xl p-3 sm:p-4 flex items-start gap-2.5 sm:gap-3 text-[#EA2B2B]">
                   <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                   <div className="text-xs font-bold leading-relaxed">{directUploadError}</div>
                 </div>
@@ -1785,7 +1810,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
 
               {/* MODE 1: Preview Data & Chunk Import */}
               {activeTab === 'chunk' && fileStats && (
-                <div className="space-y-3 sm:space-y-4 min-w-0">
+                <div key="chunk-mode-panel" className="space-y-3 sm:space-y-4 min-w-0">
                   {/* Statistik Data Terdeteksi */}
                   <div className="bg-white border-2 border-slate-200 rounded-2xl p-3.5 sm:p-4 space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
@@ -1836,7 +1861,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
 
                   {/* Warning Panel Baris Bermasalah saat Parsing + Tombol Koreksi */}
                   {showSkippedWarning && skippedInParsing.length > 0 && (
-                    <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl overflow-hidden min-w-0">
+                    <div key="skipped-warning-box" className="bg-amber-50 border-2 border-amber-300 rounded-2xl overflow-hidden min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 gap-2 border-b border-amber-200 bg-amber-100/60">
                         <div className="flex items-center gap-2 text-amber-900 min-w-0">
                           <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
@@ -1891,7 +1916,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
 
                   {/* Panel Rincian Data Ganda di File Excel Sebelum Import */}
                   {duplicateInParsing.length > 0 && (
-                    <div className="bg-[#EBF7FD] border-2 border-[#1CB0F6]/40 rounded-2xl overflow-hidden min-w-0 shadow-xs">
+                    <div key="duplicate-warning-box" className="bg-[#EBF7FD] border-2 border-[#1CB0F6]/40 rounded-2xl overflow-hidden min-w-0 shadow-xs">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 gap-2 border-b border-[#1CB0F6]/30 bg-sky-100/60">
                         <div className="flex items-start sm:items-center gap-2.5 text-slate-800 min-w-0">
                           <Copy className="w-4 h-4 shrink-0 text-[#1899D6] mt-0.5 sm:mt-0" />
@@ -2053,7 +2078,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
 
                   {/* Tabel Preview Baris Pertama */}
                   {showPreview && validParsedRows.length > 0 && (
-                    <div className="border-2 border-slate-200 rounded-2xl overflow-hidden shadow-xs min-w-0">
+                    <div key="preview-table-box" className="border-2 border-slate-200 rounded-2xl overflow-hidden shadow-xs min-w-0">
                       <div className="bg-slate-100 px-3 sm:px-4 py-2 border-b-2 border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                         <span className="text-[11px] font-black uppercase text-slate-600 tracking-wider">
                           Preview 5 Baris Pertama Terdeteksi
@@ -2131,7 +2156,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
 
                   {/* Progress Bar Saat Import */}
                   {isImporting && (
-                    <div className="space-y-2 bg-slate-50 border-2 border-slate-200 rounded-2xl p-3 sm:p-4">
+                    <div key="import-progress-box" className="space-y-2 bg-slate-50 border-2 border-slate-200 rounded-2xl p-3 sm:p-4">
                       <div className="flex items-center justify-between text-xs font-black">
                         <span className="text-slate-700 truncate pr-2">{currentChunkInfo}</span>
                         <span className="text-[#58CC02] shrink-0">{importProgress}%</span>
@@ -2149,7 +2174,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
 
               {/* MODE 2: Direct File Form */}
               {activeTab === 'direct' && (
-                <div className="p-3.5 sm:p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-3 min-w-0">
+                <div key="direct-mode-panel" className="p-3.5 sm:p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl space-y-3 min-w-0">
                   <p className="text-xs text-slate-600 font-bold leading-relaxed">
                     Mode ini akan mengunggah file Excel Anda langsung ke server Laravel dan diproses menggunakan pustaka <strong>PhpSpreadsheet</strong> di latar belakang.
                   </p>
@@ -2173,7 +2198,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                   </button>
                 </div>
               )}
-            </>
+            </div>
           )}
 
         </div>
@@ -2199,13 +2224,13 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                 {isImporting ? (
                   <>
                     <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
-                    <span className="truncate">Mengimpor ({importProgress}%)...</span>
+                    <span className="truncate">{`Mengimpor (${importProgress}%)...`}</span>
                   </>
                 ) : (
                   <>
                     <Upload className="w-4 h-4 shrink-0" />
                     <span className="truncate">
-                      Mulai Import ({fileStats?.uniqueVotersCount?.toLocaleString('id-ID') || validParsedRows.length.toLocaleString('id-ID')} Pemilih Unik{fileStats?.duplicateVotersCount ? ` & ${fileStats.duplicateVotersCount.toLocaleString('id-ID')} Update` : ''})
+                      {`Mulai Import (${(fileStats?.uniqueVotersCount ?? validParsedRows.length).toLocaleString('id-ID')} Pemilih Unik${fileStats?.duplicateVotersCount ? ` & ${fileStats.duplicateVotersCount.toLocaleString('id-ID')} Update` : ''})`}
                     </span>
                   </>
                 )}
