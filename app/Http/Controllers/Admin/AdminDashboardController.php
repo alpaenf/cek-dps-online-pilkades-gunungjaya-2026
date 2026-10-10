@@ -66,7 +66,12 @@ class AdminDashboardController extends Controller
             $votersQuery->where('jenis_kelamin', $genderFilter);
         }
 
-        $voters = $votersQuery->orderBy('id', 'desc')->paginate(15)->onEachSide(1)->withQueryString();
+        $perPage = (int) $request->input('per_page', 15);
+        if (! in_array($perPage, [10, 15, 25, 50, 100], true)) {
+            $perPage = 15;
+        }
+
+        $voters = $votersQuery->orderBy('id', 'desc')->paginate($perPage)->withQueryString();
 
         $allTpsOptions = Tps::select('id', 'nomor_tps', 'nama_lokasi', 'dusun')
             ->orderBy('nomor_tps')
@@ -154,6 +159,7 @@ class AdminDashboardController extends Controller
                 'search' => $search ?? '',
                 'tps_id' => $tpsFilter ?? 'all',
                 'gender' => $genderFilter ?? 'all',
+                'per_page' => $perPage,
                 'tab' => $activeTab,
             ],
             'config' => [

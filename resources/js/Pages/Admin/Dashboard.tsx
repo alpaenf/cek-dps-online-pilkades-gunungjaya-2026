@@ -16,6 +16,8 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Database,
   User,
   Info,
@@ -116,6 +118,12 @@ interface PaginatedVoters {
   last_page: number;
   per_page: number;
   total: number;
+  from?: number | null;
+  to?: number | null;
+  first_page_url?: string | null;
+  last_page_url?: string | null;
+  prev_page_url?: string | null;
+  next_page_url?: string | null;
   links: {
     url: string | null;
     label: string;
@@ -142,6 +150,7 @@ interface AdminDashboardProps {
     search: string;
     tps_id: string;
     gender: string;
+    per_page?: number;
     tab?: string;
   };
   config: {
@@ -378,7 +387,12 @@ export default function AdminDashboard({
   });
 
   // Apply filters to voters list
-  const applyVoterFilters = (search = searchQuery, tps = selectedTpsFilter, gender = selectedGenderFilter) => {
+  const applyVoterFilters = (
+    search = searchQuery,
+    tps = selectedTpsFilter,
+    gender = selectedGenderFilter,
+    perPage = voters.per_page || 15
+  ) => {
     router.get(
       route('admin.dashboard'),
       {
@@ -386,8 +400,48 @@ export default function AdminDashboard({
         search: search || undefined,
         tps_id: tps !== 'all' ? tps : undefined,
         gender: gender !== 'all' ? gender : undefined,
+        per_page: perPage !== 15 ? perPage : undefined,
       },
       { preserveState: true, replace: true }
+    );
+  };
+
+  const goToPage = (pageNumber: number) => {
+    if (pageNumber < 1 || pageNumber > voters.last_page || pageNumber === voters.current_page) return;
+    router.get(
+      route('admin.dashboard'),
+      {
+        tab: 'dps',
+        search: searchQuery || undefined,
+        tps_id: selectedTpsFilter !== 'all' ? selectedTpsFilter : undefined,
+        gender: selectedGenderFilter !== 'all' ? selectedGenderFilter : undefined,
+        per_page: voters.per_page !== 15 ? voters.per_page : undefined,
+        page: pageNumber,
+      },
+      {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+      }
+    );
+  };
+
+  const handlePerPageChange = (newPerPage: number) => {
+    router.get(
+      route('admin.dashboard'),
+      {
+        tab: 'dps',
+        search: searchQuery || undefined,
+        tps_id: selectedTpsFilter !== 'all' ? selectedTpsFilter : undefined,
+        gender: selectedGenderFilter !== 'all' ? selectedGenderFilter : undefined,
+        per_page: newPerPage !== 15 ? newPerPage : undefined,
+        page: 1,
+      },
+      {
+        preserveState: true,
+        preserveScroll: true,
+        replace: true,
+      }
     );
   };
 
@@ -1213,90 +1267,111 @@ export default function AdminDashboard({
               )}
             </div>
 
-            {/* Pagination */}
-            {voters.links && voters.links.length > 3 && (
-              <div className="pt-4 border-t-2 border-slate-100 flex flex-col md:flex-row items-center justify-between gap-3">
-                <div className="text-xs text-slate-500 font-bold text-center md:text-left select-none">
-                  Menampilkan <span className="text-slate-800 font-black">{voters.data.length}</span> dari{' '}
-                  <span className="text-slate-800 font-black">{voters.total.toLocaleString('id-ID')}</span> pemilih
-                  {voters.last_page > 1 && (
-                    <span className="text-slate-400 font-bold ml-1.5">
-                      (Hal. {voters.current_page} dari {voters.last_page})
-                    </span>
-                  )}
+            {/* Pagination Controls - Model Dropdown & Navigasi Ringkas */}
+            {voters.total > 0 && (
+              <div className="pt-4 border-t-2 border-slate-100 flex flex-col md:flex-row items-center justify-between gap-3 select-none">
+                {/* Info Total Pemilih */}
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-1.5 text-xs text-slate-600 font-bold">
+                  <span>Menampilkan</span>
+                  <span className="font-black text-slate-900 bg-slate-100 px-2 py-0.5 rounded-lg border border-slate-200">
+                    {voters.from ?? 1}–{voters.to ?? voters.data.length}
+                  </span>
+                  <span>dari</span>
+                  <span className="font-black text-slate-900">
+                    {voters.total.toLocaleString('id-ID')}
+                  </span>
+                  <span>pemilih</span>
                 </div>
 
-                <div className="w-full md:w-auto max-w-full overflow-x-auto pb-1 flex items-center justify-center md:justify-end no-scrollbar">
-                  <div className="inline-flex items-center gap-1.5 shrink-0 px-0.5">
-                    {voters.links.map((link, idx) => {
-                      const isPrev = idx === 0 || link.label.includes('&laquo;') || link.label.toLowerCase().includes('prev');
-                      const isNext = idx === voters.links.length - 1 || link.label.includes('&raquo;') || link.label.toLowerCase().includes('next');
-                      const isEllipsis = link.label === '...';
-
-                      if (isEllipsis) {
-                        return (
-                          <span
-                            key={idx}
-                            className="w-7 h-8 inline-flex items-center justify-center text-xs font-black text-slate-400 shrink-0 select-none"
-                          >
-                            ...
-                          </span>
-                        );
-                      }
-
-                      const prevNextContent = isPrev ? (
-                        <>
-                          <ChevronLeft className="w-4 h-4 shrink-0" />
-                          <span className="hidden sm:inline">Sebelumnya</span>
-                        </>
-                      ) : isNext ? (
-                        <>
-                          <span className="hidden sm:inline">Berikutnya</span>
-                          <ChevronRight className="w-4 h-4 shrink-0" />
-                        </>
-                      ) : null;
-
-                      if (!link.url) {
-                        return (
-                          <span
-                            key={idx}
-                            aria-disabled="true"
-                            className={`h-8 rounded-xl text-xs font-bold text-slate-300 bg-slate-50 border border-slate-200/80 shrink-0 inline-flex items-center justify-center cursor-not-allowed select-none ${
-                              isPrev || isNext ? 'px-2.5 sm:px-3 gap-1' : 'min-w-[34px] px-2'
-                            }`}
-                          >
-                            {isPrev || isNext ? prevNextContent : link.label}
-                          </span>
-                        );
-                      }
-
-                      if (link.active) {
-                        return (
-                          <span
-                            key={idx}
-                            aria-current="page"
-                            className="min-w-[34px] h-8 px-2 rounded-xl text-xs font-black bg-[#58CC02] text-white border-b-2 border-[#46A302] shadow-sm shrink-0 inline-flex items-center justify-center select-none"
-                          >
-                            {link.label}
-                          </span>
-                        );
-                      }
-
-                      return (
-                        <Link
-                          key={idx}
-                          href={link.url}
-                          preserveState
-                          preserveScroll
-                          className={`h-8 rounded-xl text-xs font-black text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 hover:border-slate-300 shrink-0 inline-flex items-center justify-center transition-all active:translate-y-0.5 shadow-2xs ${
-                            isPrev || isNext ? 'px-2.5 sm:px-3 gap-1' : 'min-w-[34px] px-2'
-                          }`}
-                        >
-                          {isPrev || isNext ? prevNextContent : link.label}
-                        </Link>
-                      );
-                    })}
+                {/* Kontrol Navigasi & Dropdown */}
+                <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2.5">
+                  {/* Pilihan Baris Per Halaman */}
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                    <span className="hidden sm:inline">Tampilkan:</span>
+                    <select
+                      value={voters.per_page}
+                      onChange={(e) => handlePerPageChange(Number(e.target.value))}
+                      className="bg-white border-2 border-b-3 border-slate-200 hover:border-slate-300 rounded-xl px-2.5 py-1 text-xs font-black text-slate-700 focus:outline-none focus:border-[#58CC02] cursor-pointer shadow-2xs transition-colors"
+                      title="Jumlah pemilih per halaman"
+                    >
+                      <option value={10}>10 baris</option>
+                      <option value={15}>15 baris</option>
+                      <option value={25}>25 baris</option>
+                      <option value={50}>50 baris</option>
+                      <option value={100}>100 baris</option>
+                    </select>
                   </div>
+
+                  {/* Navigasi Dropdown Halaman */}
+                  {voters.last_page > 1 && (
+                    <div className="flex items-center gap-1">
+                      {/* Tombol Ke Halaman Pertama (First) */}
+                      <button
+                        type="button"
+                        disabled={voters.current_page <= 1}
+                        onClick={() => goToPage(1)}
+                        title="Ke Halaman Pertama (1)"
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-700 bg-white border border-b-2 border-slate-200 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white active:translate-y-0.5 transition-all shadow-2xs cursor-pointer"
+                      >
+                        <ChevronsLeft className="w-4 h-4" />
+                      </button>
+
+                      {/* Tombol Sebelumnya (Prev) */}
+                      <button
+                        type="button"
+                        disabled={!voters.prev_page_url}
+                        onClick={() => goToPage(voters.current_page - 1)}
+                        title="Halaman Sebelumnya"
+                        className="h-8 px-2.5 sm:px-3 rounded-xl flex items-center gap-1 text-xs font-black text-slate-700 bg-white border border-b-2 border-slate-200 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white active:translate-y-0.5 transition-all shadow-2xs cursor-pointer"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span className="hidden sm:inline">Sebelumnya</span>
+                      </button>
+
+                      {/* Dropdown Model Pemilih Halaman */}
+                      <div className="flex items-center gap-1 px-2 py-0.5 bg-slate-50 border-2 border-slate-200 rounded-xl">
+                        <span className="text-[11px] font-bold text-slate-500">Hal.</span>
+                        <select
+                          value={voters.current_page}
+                          onChange={(e) => goToPage(Number(e.target.value))}
+                          className="bg-white border-2 border-b-3 border-[#58CC02] text-[#2e8200] rounded-lg px-2 py-0.5 text-xs font-black focus:outline-none focus:ring-2 focus:ring-[#58CC02]/30 cursor-pointer shadow-2xs"
+                          title="Pilih nomor halaman langsung lewat dropdown"
+                        >
+                          {Array.from({ length: voters.last_page }, (_, i) => i + 1).map((p) => (
+                            <option key={p} value={p}>
+                              {p}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-[11px] font-bold text-slate-500">
+                          / {voters.last_page}
+                        </span>
+                      </div>
+
+                      {/* Tombol Berikutnya (Next) */}
+                      <button
+                        type="button"
+                        disabled={!voters.next_page_url}
+                        onClick={() => goToPage(voters.current_page + 1)}
+                        title="Halaman Berikutnya"
+                        className="h-8 px-2.5 sm:px-3 rounded-xl flex items-center gap-1 text-xs font-black text-slate-700 bg-white border border-b-2 border-slate-200 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white active:translate-y-0.5 transition-all shadow-2xs cursor-pointer"
+                      >
+                        <span className="hidden sm:inline">Berikutnya</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+
+                      {/* Tombol Ke Halaman Terakhir (Last) */}
+                      <button
+                        type="button"
+                        disabled={voters.current_page >= voters.last_page}
+                        onClick={() => goToPage(voters.last_page)}
+                        title={`Ke Halaman Terakhir (${voters.last_page})`}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-700 bg-white border border-b-2 border-slate-200 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-white active:translate-y-0.5 transition-all shadow-2xs cursor-pointer"
+                      >
+                        <ChevronsRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
