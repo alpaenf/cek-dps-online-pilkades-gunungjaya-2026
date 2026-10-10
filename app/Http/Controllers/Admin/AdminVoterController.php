@@ -355,6 +355,16 @@ class AdminVoterController extends Controller
                 return redirect()->back()->with('error', 'File Excel kosong atau tidak terbaca.');
             }
 
+            // Pangkas baris-baris kosong di bagian paling bawah
+            while (! empty($rawRows)) {
+                $lastRow = end($rawRows);
+                if (empty(array_filter($lastRow, fn ($v) => $v !== null && trim((string) $v) !== ''))) {
+                    array_pop($rawRows);
+                } else {
+                    break;
+                }
+            }
+
             $headerRowIndex = $this->detectHeaderRowIndex($rawRows);
             if ($headerRowIndex === -1) {
                 return redirect()->back()->with('error', 'Gagal menemukan baris kolom NIK atau Nama Pemilih dalam file Excel.');
@@ -390,9 +400,7 @@ class AdminVoterController extends Controller
 
             for ($i = $dataStartIndex; $i < count($rawRows); $i++) {
                 $row = $rawRows[$i];
-                if (empty(array_filter($row))) {
-                    $emptyRowsCount++;
-
+                if (empty(array_filter($row, fn ($v) => $v !== null && trim((string) $v) !== ''))) {
                     continue;
                 }
 
@@ -470,7 +478,7 @@ class AdminVoterController extends Controller
                 }
             }
 
-            $nonDataCount = $dataStartIndex + $emptyRowsCount;
+            $nonDataCount = $dataStartIndex;
             AppSetting::set('last_import_header_count', (string) $nonDataCount);
             AppSetting::set('last_import_total_rows', (string) count($rawRows));
 

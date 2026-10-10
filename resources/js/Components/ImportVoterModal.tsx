@@ -372,22 +372,41 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
             continue;
           }
 
-          totalRowsInFile += rawData.length;
+          // Pangkas baris-baris kosong di bagian paling bawah (trailing empty rows)
+          // agar total baris file tepat berhenti di baris data terakhir
+          let lastDataRowIdx = rawData.length - 1;
+          while (
+            lastDataRowIdx >= 0 &&
+            (!rawData[lastDataRowIdx] ||
+              rawData[lastDataRowIdx].length === 0 ||
+              !rawData[lastDataRowIdx].some(
+                (val: any) => val !== null && val !== undefined && String(val).trim() !== ''
+              ))
+          ) {
+            lastDataRowIdx--;
+          }
+
+          if (lastDataRowIdx < 0) {
+            continue;
+          }
+
+          const trimmedRawData = rawData.slice(0, lastDataRowIdx + 1);
+          totalRowsInFile += trimmedRawData.length;
 
           // 1. Deteksi Baris Header Kolom pada sheet ini
           let headerRowIdx = -1;
           let subHeaderRowIdx = -1;
 
-          for (let i = 0; i < Math.min(rawData.length, 25); i++) {
-            const rowStr = rawData[i].map((c) => String(c ?? '').trim().toUpperCase()).join(' ');
+          for (let i = 0; i < Math.min(trimmedRawData.length, 25); i++) {
+            const rowStr = trimmedRawData[i].map((c) => String(c ?? '').trim().toUpperCase()).join(' ');
             if (
               (rowStr.includes('NIK') && rowStr.includes('NAMA')) ||
               (rowStr.includes('PEMILIH') && rowStr.includes('KELAMIN')) ||
               (rowStr.includes('NO DPT') && rowStr.includes('NIK'))
             ) {
               headerRowIdx = i;
-              if (i + 1 < rawData.length) {
-                const nextRowStr = rawData[i + 1].map((c) => String(c ?? '').trim().toUpperCase()).join(' ');
+              if (i + 1 < trimmedRawData.length) {
+                const nextRowStr = trimmedRawData[i + 1].map((c) => String(c ?? '').trim().toUpperCase()).join(' ');
                 if (
                   nextRowStr.includes('TEMPAT') ||
                   nextRowStr.includes('TANGGAL') ||
@@ -406,8 +425,8 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
             continue;
           }
 
-          const headerRow = rawData[headerRowIdx];
-          const subHeaderRow = subHeaderRowIdx !== -1 ? rawData[subHeaderRowIdx] : [];
+          const headerRow = trimmedRawData[headerRowIdx];
+          const subHeaderRow = subHeaderRowIdx !== -1 ? trimmedRawData[subHeaderRowIdx] : [];
           const detectedHeaders: string[] = [];
           const colKeyMap: { [colIndex: number]: string } = {};
 
@@ -491,13 +510,12 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
             defaultSheetTps = sheetTpsMatch[1].padStart(3, '0');
           }
 
-          for (let r = dataStartIndex; r < rawData.length; r++) {
-            const row = rawData[r];
+          for (let r = dataStartIndex; r < trimmedRawData.length; r++) {
+            const row = trimmedRawData[r];
             const rowNumber = r + 1;
 
-            // A. Baris Kosong
+            // A. Baris Kosong di tengah data: lewati langsung tanpa menambah hitungan non-data
             if (!row || row.length === 0 || !row.some((val: any) => val !== null && val !== undefined && String(val).trim() !== '')) {
-              totalEmptyOrFooterRows++;
               continue;
             }
 
@@ -524,7 +542,6 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
               nama.toUpperCase().includes('KETUA P2KD') ||
               (!nama && !nikResult.nik)
             ) {
-              totalEmptyOrFooterRows++;
               continue;
             }
 
@@ -1121,7 +1138,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
         },
         body: JSON.stringify({
           clear_previous: true,
-          header_count: headerCount !== undefined ? headerCount : ((fileStats?.headerAndTitleRows || 0) + (fileStats?.emptyOrFooterRows || 0)),
+          header_count: headerCount !== undefined ? headerCount : (fileStats?.headerAndTitleRows || 0),
           total_rows: totalRows !== undefined ? totalRows : (fileStats?.totalRowsInFile || 0),
           duplicate_voters: duplicateRows.map((r) => ({
             rowNumber: r.rowNumber,
@@ -1249,10 +1266,10 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                   <div className="bg-white p-3 rounded-2xl border-2 border-slate-200 text-center">
                     <span className="text-[10px] font-black uppercase text-slate-400 block">Total Baris File</span>
                     <span className="text-base sm:text-lg font-black text-slate-800">{importResult.totalRowsInFile.toLocaleString('id-ID')}</span>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">Termasuk judul & spasi</span>
+                    <span className="text-[10px] text-slate-400 block mt-0.5">Sampai data terakhir</span>
                   </div>
                   <div className="bg-purple-50/70 p-3 rounded-2xl border-2 border-purple-200 text-center">
-                    <span className="text-[10px] font-black uppercase text-purple-700 block">Header / Kosong</span>
+                    <span className="text-[10px] font-black uppercase text-purple-700 block">Header / Judul</span>
                     <span className="text-base sm:text-lg font-black text-purple-700">{importResult.nonDataRowsCount.toLocaleString('id-ID')}</span>
                     <span className="text-[10px] text-purple-600/80 block mt-0.5">Dilewati otomatis</span>
                   </div>
@@ -1280,11 +1297,11 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                     <span>Rekonsiliasi Angka & Penjelasan Selisih Data:</span>
                   </div>
                   <p className="text-[11px] text-slate-600 leading-relaxed font-medium">
-                    • <strong>Total Baris File:</strong> {importResult.totalRowsInFile.toLocaleString('id-ID')} baris.<br />
+                    • <strong>Total Baris File:</strong> {importResult.totalRowsInFile.toLocaleString('id-ID')} baris (sampai baris data pemilih terakhir).<br />
+                    • <strong>Baris Header / Judul Kolom:</strong> {importResult.nonDataRowsCount.toLocaleString('id-ID')} baris (dilewati otomatis).<br />
                     • <strong>Pemilih Baru Masuk DPS:</strong> {importResult.inserted.toLocaleString('id-ID')} orang (NIK unik berbeda).<br />
                     • <strong>Data Ganda di File (Diperbarui):</strong> {importResult.updated.toLocaleString('id-ID')} baris (NIK duplikat disinkronkan).<br />
-                    • <strong>Data Terlewat (Perlu Dilengkapi):</strong> {importResult.skipped.toLocaleString('id-ID')} baris (NIK/nama tidak lengkap).<br />
-                    • <strong>Baris Non-Data:</strong> {importResult.nonDataRowsCount.toLocaleString('id-ID')} baris (judul kop, header kolom, & spasi kosong).
+                    • <strong>Data Terlewat (Perlu Dilengkapi):</strong> {importResult.skipped.toLocaleString('id-ID')} baris (NIK/nama tidak lengkap).
                   </p>
                 </div>
 
@@ -1784,11 +1801,11 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                       <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
                         <span className="text-[10px] text-slate-400 font-black uppercase block">Baris di File</span>
                         <span className="text-sm sm:text-base font-black text-slate-800">{fileStats.totalRowsInFile.toLocaleString('id-ID')}</span>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">Termasuk judul & spasi</span>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">Sampai data terakhir</span>
                       </div>
                       <div className="p-2.5 bg-purple-50/70 rounded-xl border border-purple-200">
-                        <span className="text-[10px] text-purple-700 font-black uppercase block">Header / Kosong</span>
-                        <span className="text-sm sm:text-base font-black text-purple-700">{(fileStats.headerAndTitleRows + fileStats.emptyOrFooterRows).toLocaleString('id-ID')}</span>
+                        <span className="text-[10px] text-purple-700 font-black uppercase block">Header / Judul</span>
+                        <span className="text-sm sm:text-base font-black text-purple-700">{fileStats.headerAndTitleRows.toLocaleString('id-ID')}</span>
                         <span className="text-[10px] text-purple-600/80 block mt-0.5">Dilewati otomatis</span>
                       </div>
                       <div className="p-2.5 bg-[#E5F9D2] rounded-xl border border-[#58CC02]/40">

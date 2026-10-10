@@ -557,16 +557,16 @@ export default function AdminDashboard({
                     <span>Rekonsiliasi & Audit Data Import Excel</span>
                   </span>
                   <span className="hidden sm:inline-flex text-[11px] font-bold text-slate-400">
-                    Mentah ({totalRawExcelRows.toLocaleString('id-ID')}) = Header/Kosong ({headerCount.toLocaleString('id-ID')}) + Bersih ({stats.totalDps.toLocaleString('id-ID')}) + Ganda ({duplicateCount.toLocaleString('id-ID')}) + Terlewat ({pendingCount.toLocaleString('id-ID')})
+                    Total Baris ({totalRawExcelRows.toLocaleString('id-ID')}) = Header ({headerCount.toLocaleString('id-ID')}) + Bersih ({stats.totalDps.toLocaleString('id-ID')}) + Ganda ({duplicateCount.toLocaleString('id-ID')}) + Terlewat ({pendingCount.toLocaleString('id-ID')})
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-                  {/* Kotak 1: Total Data Mentah Excel */}
+                  {/* Kotak 1: Total Baris File Excel */}
                   <div className="bg-white border-2 border-b-4 border-indigo-200 rounded-3xl p-3.5 sm:p-5 shadow-xs hover:border-indigo-300 transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-indigo-600">
-                        Total Mentah Excel
+                        Total Baris File
                       </span>
                       <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#6366F1] text-white flex items-center justify-center shrink-0">
                         <FileSpreadsheet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -576,15 +576,15 @@ export default function AdminDashboard({
                       {totalRawExcelRows.toLocaleString('id-ID')}
                     </div>
                     <span className="text-[10px] sm:text-[11px] font-bold text-indigo-600 mt-1 block truncate">
-                      DPS + Ganda + Kosong + Terlewat
+                      Sampai baris data terakhir
                     </span>
                   </div>
 
-                  {/* Kotak 2: Header / Baris Kosong */}
+                  {/* Kotak 2: Header / Judul Kolom */}
                   <div className="bg-white border-2 border-b-4 border-purple-200 rounded-3xl p-3.5 sm:p-5 shadow-xs hover:border-purple-300 transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-purple-700">
-                        Header / Kosong
+                        Header / Judul
                       </span>
                       <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#7E22CE] text-white flex items-center justify-center shrink-0">
                         <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -594,7 +594,7 @@ export default function AdminDashboard({
                       {headerCount.toLocaleString('id-ID')}
                     </div>
                     <span className="text-[10px] sm:text-[11px] font-bold text-purple-600 mt-1 block truncate">
-                      {pctHeader}% Dilewati Otomatis
+                      Dilewati Otomatis
                     </span>
                   </div>
 
