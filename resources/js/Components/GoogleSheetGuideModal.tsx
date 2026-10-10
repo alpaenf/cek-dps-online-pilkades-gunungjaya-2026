@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Copy, Check, ExternalLink, FileSpreadsheet, ShieldAlert, Sparkles, CheckCircle2, Code, AlertTriangle, RefreshCw, HelpCircle } from 'lucide-react';
+import { X, Copy, Check, ExternalLink, FileSpreadsheet, ShieldAlert, Sparkles, CheckCircle2, Code, AlertTriangle, RefreshCw, HelpCircle, Lightbulb, FlaskConical, XCircle, ArrowRight } from 'lucide-react';
 import { GOOGLE_APPS_SCRIPT_SOURCE } from '../data/googleAppsScriptCode';
 import { testAppsScriptConnection } from '../data/mockDatabase';
 
@@ -197,7 +197,10 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs sm:text-sm font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-900 focus:bg-white"
                   />
                   <div className="mt-2 p-3 bg-blue-50/70 border border-blue-200 rounded-lg text-[11px] text-blue-900 space-y-1">
-                    <p className="font-semibold">💡 Anda memiliki 2 metode yang didukung penuh:</p>
+                    <p className="font-semibold flex items-center gap-1.5">
+                      <Lightbulb className="w-3.5 h-3.5 text-blue-800 shrink-0" />
+                      <span>Anda memiliki 2 metode yang didukung penuh:</span>
+                    </p>
                     <p><strong>Metode A (Rekomendasi):</strong> Tempelkan URL Google Apps Script Web App (berakhiran <code>/exec</code>).</p>
                     <p><strong>Metode B (Alternatif Termudah):</strong> Tempelkan langsung Link Google Spreadsheet Anda (contoh: <code>https://docs.google.com/spreadsheets/d/...</code>) setelah mengatur hak akses ke <em>"Siapa saja yang memiliki link dapat melihat"</em>.</p>
                   </div>
@@ -218,8 +221,12 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                     disabled={isTesting}
                     className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-2xs disabled:opacity-50"
                   >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isTesting ? 'animate-spin text-blue-900' : ''}`} />
-                    <span>{isTesting ? 'Sedang Menguji...' : '🧪 Uji / Tes Koneksi URL'}</span>
+                    {isTesting ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-blue-900" />
+                    ) : (
+                      <FlaskConical className="w-3.5 h-3.5 text-blue-900" />
+                    )}
+                    <span>{isTesting ? 'Sedang Menguji...' : 'Uji / Tes Koneksi URL'}</span>
                   </button>
 
                   {inputUrl && (
@@ -269,9 +276,10 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                         <button
                           type="button"
                           onClick={() => setActiveTab('troubleshooting')}
-                          className="text-blue-900 underline font-semibold hover:text-blue-950"
+                          className="text-blue-900 underline font-semibold hover:text-blue-950 inline-flex items-center gap-1"
                         >
-                          Lihat langkah perbaikan di tab "Solusi Error" ➔
+                          <span>Lihat langkah perbaikan di tab &quot;Solusi Error&quot;</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     )}
@@ -288,8 +296,9 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                   </p>
                 ) : (
                   <div className="space-y-1">
-                    <p className="text-blue-900 font-medium">
-                      ✓ Menggunakan Database Simulasi Google Sheets Desa Gunungjaya (7 contoh pemilih aktif di 5 TPS).
+                    <p className="text-blue-900 font-medium flex items-center gap-1.5">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span>Menggunakan Database Simulasi Google Sheets Desa Gunungjaya (7 contoh pemilih aktif di 5 TPS).</span>
                     </p>
                     <p className="text-slate-500 text-[11px]">
                       Anda dapat mencoba NIK contoh seperti <strong>3327091205850001</strong> atau <strong>3327092304900002</strong>.
@@ -325,8 +334,8 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                 <div className="pl-7 pt-1">
                   <div className="bg-white p-3 rounded-lg border border-amber-200 text-xs text-slate-800 space-y-1">
                     <strong className="block text-slate-900 font-semibold">Cara Memperbaiki:</strong>
-                    <p>1. Buka kembali Google Spreadsheet Anda ➔ Klik <strong>Ekstensi (Extensions)</strong> ➔ <strong>Apps Script</strong>.</p>
-                    <p>2. Di pojok kanan atas, klik tombol biru <strong>Deploy (Terapkan)</strong> ➔ pilih <strong>Manage deployments (Kelola penerapan)</strong>.</p>
+                    <p>1. Buka kembali Google Spreadsheet Anda → Klik <strong>Ekstensi (Extensions)</strong> → <strong>Apps Script</strong>.</p>
+                    <p>2. Di pojok kanan atas, klik tombol biru <strong>Deploy (Terapkan)</strong> → pilih <strong>Manage deployments (Kelola penerapan)</strong>.</p>
                     <p>3. Klik ikon pensil (Edit) di samping penerapan aktif Anda.</p>
                     <p>4. Pada pilihan <strong>Who has access (Siapa yang memiliki akses)</strong>, ubah dari <em>"Only myself"</em> menjadi <strong>"Anyone" (Siapa saja)</strong>.</p>
                     <p>5. Pada <em>Version</em>, pilih <strong>New version (Versi baru)</strong>.</p>
@@ -343,7 +352,7 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                 </div>
                 <p className="text-xs text-slate-700 leading-relaxed pl-7">
                   Jangan menyalin link dari bilah alamat browser saat sedang mengedit script (yang berisi <code>/edit</code>).
-                  Link yang benar didapatkan setelah mengklik tombol <strong>Deploy ➔ New deployment ➔ Web App</strong>, dengan format:
+                  Link yang benar didapatkan setelah mengklik tombol <strong>Deploy → New deployment → Web App</strong>, dengan format:
                 </p>
                 <div className="pl-7">
                   <code className="block p-2 bg-slate-900 text-emerald-400 font-mono text-[11px] rounded-lg break-all">
@@ -399,7 +408,7 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                     File Apps Script: Code.gs
                   </h4>
                   <p className="text-xs text-slate-500">
-                    Buka Google Sheets ➔ <strong>Ekstensi (Extensions)</strong> ➔ <strong>Apps Script</strong> ➔ Tempel kode ini.
+                    Buka Google Sheets → <strong>Ekstensi (Extensions)</strong> → <strong>Apps Script</strong> → Tempel kode ini.
                   </p>
                 </div>
                 <button
@@ -420,7 +429,7 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
 
               <div className="p-4 bg-slate-100 rounded-xl text-xs space-y-1.5">
                 <span className="font-bold text-slate-900 block">Langkah Deploy Web App:</span>
-                <p>1. Klik <strong>Deploy</strong> (Terapkan) ➔ <strong>New deployment</strong> (Penerapan baru).</p>
+                <p>1. Klik <strong>Deploy</strong> (Terapkan) → <strong>New deployment</strong> (Penerapan baru).</p>
                 <p>2. Pilih tipe (ikon roda gigi): <strong>Web app</strong>.</p>
                 <p>3. Atur <em>Execute as</em>: <strong>Me</strong> (Akun Anda).</p>
                 <p>4. Atur <em>Who has access</em>: <strong>Anyone</strong> (Wajib "Siapa saja", bukan "Only myself").</p>
@@ -536,8 +545,9 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                     </tbody>
                   </table>
                 </div>
-                <div className="p-2.5 bg-amber-100/50 rounded-lg text-amber-950 text-[11px] leading-relaxed">
-                  💡 <strong>Cara Instan:</strong> Klik tombol <strong>&quot;Salin Data Tabel (Siap Tempel)&quot;</strong> di atas, buka tab <code>PENGATURAN</code> di Google Sheets Anda, klik sel <strong>A1</strong>, lalu tekan <strong>Ctrl + V</strong> (atau Cmd + V di Mac). Semua data di atas langsung terisi rapi ke masing-masing baris dan kolom!
+                <div className="p-2.5 bg-amber-100/50 rounded-lg text-amber-950 text-[11px] leading-relaxed flex items-start gap-1.5">
+                  <Lightbulb className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                  <span><strong>Cara Instan:</strong> Klik tombol <strong>&quot;Salin Data Tabel (Siap Tempel)&quot;</strong> di atas, buka tab <code>PENGATURAN</code> di Google Sheets Anda, klik sel <strong>A1</strong>, lalu tekan <strong>Ctrl + V</strong> (atau Cmd + V di Mac). Semua data di atas langsung terisi rapi ke masing-masing baris dan kolom!</span>
                 </div>
               </div>
 
@@ -569,7 +579,7 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                         Kolom RW: <code className="bg-slate-100 px-1 py-0.5 rounded font-bold text-slate-900">01, 02</code> atau <code className="bg-slate-100 px-1 py-0.5 rounded font-bold text-slate-900">01 & 02</code>
                       </p>
                       <span className="text-emerald-700 block font-semibold text-[10px]">
-                        ➔ Muncul di Web: RT 01, 02, 03, 04 / RW 01 & 02
+                        → Muncul di Web: RT 01, 02, 03, 04 / RW 01 & 02
                       </span>
                     </div>
 
@@ -580,7 +590,7 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                         Kolom RW: <code className="bg-slate-100 px-1 py-0.5 rounded font-bold text-slate-900">01 & 02</code>
                       </p>
                       <span className="text-emerald-700 block font-semibold text-[10px]">
-                        ➔ Muncul di Web: RT 01 s/d 04 / RW 01 & 02
+                        → Muncul di Web: RT 01 s/d 04 / RW 01 & 02
                       </span>
                     </div>
                   </div>
@@ -592,7 +602,7 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                       <code className="bg-slate-100 px-1.5 py-0.5 rounded font-bold text-slate-900">RT 01-03 (RW 01) & RT 01-02 (RW 02)</code> (kosongkan kolom RW).
                     </p>
                     <span className="text-emerald-700 block font-semibold text-[10px]">
-                      ➔ Sistem otomatis mendeteksi dan menampilkan seluruh cakupan dengan rapi tanpa terpotong!
+                      → Sistem otomatis mendeteksi dan menampilkan seluruh cakupan dengan rapi tanpa terpotong!
                     </span>
                   </div>
                 </div>
@@ -608,14 +618,15 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                   Arsitektur Keamanan (Option A - Google Apps Script):
                 </span>
                 <p className="text-xs text-blue-900">
-                  Google Sheets (Tersimpan Privat oleh Panitia) ➔ Google Apps Script Web App (API Filter NIK) ➔ Website CEK DPT (Frontend Publik)
+                  Google Sheets (Tersimpan Privat oleh Panitia) → Google Apps Script Web App (API Filter NIK) → Website CEK DPT (Frontend Publik)
                 </p>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div className="p-4 rounded-xl border border-emerald-200 bg-emerald-50/50">
-                  <span className="font-bold text-emerald-900 block mb-1">
-                    ✓ Standar Keamanan Terpenuhi:
+                  <span className="font-bold text-emerald-900 flex items-center gap-1.5 mb-1">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>Standar Keamanan Terpenuhi:</span>
                   </span>
                   <ul className="list-disc pl-4 space-y-1 text-emerald-800">
                     <li>Tidak ada API Secret / Service Account key di frontend JavaScript.</li>
@@ -627,8 +638,9 @@ export const GoogleSheetGuideModal: React.FC<GoogleSheetGuideModalProps> = ({
                 </div>
 
                 <div className="p-4 rounded-xl border border-red-200 bg-red-50/50">
-                  <span className="font-bold text-red-900 block mb-1">
-                    ✗ Larangan yang Diterapkan:
+                  <span className="font-bold text-red-900 flex items-center gap-1.5 mb-1">
+                    <XCircle className="w-4 h-4 text-red-600" />
+                    <span>Larangan yang Diterapkan:</span>
                   </span>
                   <ul className="list-disc pl-4 space-y-1 text-red-800">
                     <li>TIDAK ADA endpoint <code>/api/all</code> atau <code>/api/dpt</code>.</li>

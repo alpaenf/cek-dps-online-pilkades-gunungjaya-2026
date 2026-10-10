@@ -2429,7 +2429,8 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                     ) : (
                       <>
                         <Save className="w-4 h-4" />
-                        <span>Simpan & Lanjut Berikutnya ➔</span>
+                        <span>Simpan & Lanjut Berikutnya</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </>
                     )}
                   </button>

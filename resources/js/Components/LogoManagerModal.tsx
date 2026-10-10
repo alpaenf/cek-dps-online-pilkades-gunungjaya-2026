@@ -291,13 +291,20 @@ export const LogoManagerModal: React.FC<LogoManagerModalProps> = ({
 
                       <button
                         type="button"
-                        className={`w-full mt-3 py-1.5 px-3 rounded-lg text-xs font-bold transition-colors ${
+                        className={`w-full mt-3 py-1.5 px-3 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 ${
                           isSelected
                             ? 'bg-blue-900 text-white'
                             : 'bg-slate-100 hover:bg-blue-50 hover:text-blue-900 text-slate-700'
                         }`}
                       >
-                        {isSelected ? '✓ Logo Terpilih' : 'Gunakan Logo Ini'}
+                        {isSelected ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Logo Terpilih</span>
+                          </>
+                        ) : (
+                          <span>Gunakan Logo Ini</span>
+                        )}
                       </button>
                     </div>
                   );

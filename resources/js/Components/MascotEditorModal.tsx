@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, Link } from '@inertiajs/react';
-import { X, Sparkles, MessageSquareQuote, Award, Megaphone, Shield, Save, CheckCircle2, Lock, Edit3, RefreshCw } from 'lucide-react';
+import { X, Sparkles, MessageSquareQuote, Award, Megaphone, Shield, Save, CheckCircle2, Lock, Edit3, RefreshCw, ArrowRight, Lightbulb } from 'lucide-react';
 import { PilkadesConfig } from '../types/pilkades';
 
 interface MascotEditorModalProps {
@@ -134,9 +134,10 @@ export const MascotEditorModal: React.FC<MascotEditorModalProps> = ({
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
               <a
                 href="/admin/login"
-                className="w-full sm:w-auto px-6 py-3 bg-[#58CC02] hover:bg-[#4ebb02] text-white font-black text-xs uppercase tracking-wider rounded-2xl border-b-4 border-[#46A302] active:border-b-0 active:translate-y-1 shadow-sm transition"
+                className="w-full sm:w-auto px-6 py-3 bg-[#58CC02] hover:bg-[#4ebb02] text-white font-black text-xs uppercase tracking-wider rounded-2xl border-b-4 border-[#46A302] active:border-b-0 active:translate-y-1 shadow-sm transition flex items-center justify-center gap-1.5"
               >
-                Masuk ke Panel Admin →
+                <span>Masuk ke Panel Admin</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </a>
               <button
                 type="button"
@@ -223,8 +224,9 @@ export const MascotEditorModal: React.FC<MascotEditorModalProps> = ({
               {/* TAB 1: Balon Sapaan */}
               {activeTab === 'sapaan' && (
                 <div className="space-y-4 animate-in fade-in duration-150">
-                  <div className="p-3.5 rounded-2xl bg-purple-50 border-2 border-purple-200 text-xs text-purple-900 font-medium leading-relaxed">
-                    💡 <strong>Tips Balon Sapaan:</strong> Tuliskan <strong>1 baris per kalimat</strong>. Kalimat-kalimat ini akan berganti secara dinamis saat warga menekan tombol <em>Ganti Nasehat Glawu</em>.
+                  <div className="p-3.5 rounded-2xl bg-purple-50 border-2 border-purple-200 text-xs text-purple-900 font-medium leading-relaxed flex items-start gap-2">
+                    <Lightbulb className="w-4 h-4 text-purple-600 shrink-0 mt-0.5" />
+                    <span><strong>Tips Balon Sapaan:</strong> Tuliskan <strong>1 baris per kalimat</strong>. Kalimat-kalimat ini akan berganti secara dinamis saat warga menekan tombol <em>Ganti Nasehat Glawu</em>.</span>
                   </div>
 
                   <div className="space-y-1.5">

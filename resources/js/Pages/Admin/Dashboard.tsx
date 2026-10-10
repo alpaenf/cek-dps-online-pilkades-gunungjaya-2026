@@ -30,7 +30,8 @@ import {
   Copy,
   AlertTriangle,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Lightbulb
 } from 'lucide-react';
 import { DEFAULT_VILLAGE_LOGO, DEFAULT_MASCOT_GLAWU } from '@/data/logoPresets';
 import { PageProps } from '@/types';
@@ -863,10 +864,11 @@ export default function AdminDashboard({
                   }`}>
                     <Sparkles className="w-3.5 h-3.5 shrink-0 text-amber-300" />
                   </div>
-                  <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md font-black shrink-0 whitespace-nowrap ${
+                  <span className={`text-[10px] sm:text-[11px] px-2 py-0.5 rounded-md font-black shrink-0 whitespace-nowrap flex items-center gap-1 ${
                     activeTab === 'redaksi' ? 'bg-white text-[#9333EA]' : 'bg-purple-100 text-purple-700'
                   }`}>
-                    Si Glawu ✨
+                    <span>Si Glawu</span>
+                    <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
                   </span>
                 </div>
                 <span className="font-black text-xs sm:text-sm uppercase tracking-wider block truncate">
@@ -1507,8 +1509,9 @@ export default function AdminDashboard({
                         )}
                       </div>
 
-                      <p className="text-[11px] text-slate-500 font-medium text-left leading-tight bg-white p-2.5 rounded-xl border border-slate-200">
-                        💡 <strong>Format:</strong> PNG transparan (disarankan), JPG, WebP, atau SVG. Ukuran maksimal <strong>5 MB</strong>.
+                      <p className="text-[11px] text-slate-500 font-medium text-left leading-tight bg-white p-2.5 rounded-xl border border-slate-200 flex items-start gap-1.5">
+                        <Lightbulb className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                        <span><strong>Format:</strong> PNG transparan (disarankan), JPG, WebP, atau SVG. Ukuran maksimal <strong>5 MB</strong>.</span>
                       </p>
                     </div>
                   </div>
@@ -1602,7 +1605,10 @@ export default function AdminDashboard({
                     <p className="text-xs font-bold text-red-500">{mascotForm.errors.mascot_speeches}</p>
                   )}
                   <div className="flex items-center justify-between text-xs text-slate-400 font-medium">
-                    <span>💡 Tips: Gunakan bahasa santai, ajakan damai, atau bahasa Banyumasan khas desa agar ramah warga.</span>
+                    <span className="flex items-center gap-1 text-slate-500">
+                      <Lightbulb className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span>Tips: Gunakan bahasa santai, ajakan damai, atau bahasa Banyumasan khas desa agar ramah warga.</span>
+                    </span>
                     <span className="font-bold text-purple-700">
                       {previewSpeeches.length} baris terdeteksi
                     </span>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Heart, Sparkles, Shield, CheckCircle2, Award, Megaphone, Share2, HelpCircle, ChevronRight, MessageSquareQuote, Edit3, RefreshCw } from 'lucide-react';
+import { Heart, Sparkles, Shield, CheckCircle2, Award, Megaphone, Share2, HelpCircle, ChevronRight, MessageSquareQuote, Edit3, RefreshCw, ArrowRight } from 'lucide-react';
 import { DEFAULT_MASCOT_GLAWU, DEFAULT_MASCOT_GLAWU_GUIDE } from '../data/logoPresets';
 import { PilkadesConfig } from '../types/pilkades';
 
@@ -314,9 +314,10 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
                   <button
                     type="button"
                     onClick={onScrollToSearch}
-                    className="w-full sm:w-auto px-4 py-2.5 bg-[#58CC02] hover:bg-[#4ebb02] text-white font-black rounded-2xl border-b-4 border-[#46A302] active:border-b-0 active:translate-y-1 text-xs uppercase tracking-wider whitespace-nowrap shadow-sm transition cursor-pointer text-center"
+                    className="w-full sm:w-auto px-4 py-2.5 bg-[#58CC02] hover:bg-[#4ebb02] text-white font-black rounded-2xl border-b-4 border-[#46A302] active:border-b-0 active:translate-y-1 text-xs uppercase tracking-wider whitespace-nowrap shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    Cek Status {phaseName} Anda →
+                    <span>Cek Status {phaseName} Anda</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
