@@ -66,7 +66,7 @@ class AdminDashboardController extends Controller
             $votersQuery->where('jenis_kelamin', $genderFilter);
         }
 
-        $voters = $votersQuery->orderBy('id', 'desc')->paginate(15)->withQueryString();
+        $voters = $votersQuery->orderBy('id', 'desc')->paginate(15)->onEachSide(1)->withQueryString();
 
         $allTpsOptions = Tps::select('id', 'nomor_tps', 'nama_lokasi', 'dusun')
             ->orderBy('nomor_tps')

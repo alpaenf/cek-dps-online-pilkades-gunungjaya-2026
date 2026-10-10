@@ -1215,38 +1215,88 @@ export default function AdminDashboard({
 
             {/* Pagination */}
             {voters.links && voters.links.length > 3 && (
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
-                <span className="text-xs text-slate-500 font-bold">
-                  Menampilkan {voters.data.length} dari {voters.total.toLocaleString('id-ID')} pemilih
-                </span>
-                <div className="flex items-center gap-1">
-                  {voters.links.map((link, idx) => {
-                    const label = link.label.replace('&laquo;', '«').replace('&raquo;', '»');
-                    if (!link.url) {
+              <div className="pt-4 border-t-2 border-slate-100 flex flex-col md:flex-row items-center justify-between gap-3">
+                <div className="text-xs text-slate-500 font-bold text-center md:text-left select-none">
+                  Menampilkan <span className="text-slate-800 font-black">{voters.data.length}</span> dari{' '}
+                  <span className="text-slate-800 font-black">{voters.total.toLocaleString('id-ID')}</span> pemilih
+                  {voters.last_page > 1 && (
+                    <span className="text-slate-400 font-bold ml-1.5">
+                      (Hal. {voters.current_page} dari {voters.last_page})
+                    </span>
+                  )}
+                </div>
+
+                <div className="w-full md:w-auto max-w-full overflow-x-auto pb-1 flex items-center justify-center md:justify-end no-scrollbar">
+                  <div className="inline-flex items-center gap-1.5 shrink-0 px-0.5">
+                    {voters.links.map((link, idx) => {
+                      const isPrev = idx === 0 || link.label.includes('&laquo;') || link.label.toLowerCase().includes('prev');
+                      const isNext = idx === voters.links.length - 1 || link.label.includes('&raquo;') || link.label.toLowerCase().includes('next');
+                      const isEllipsis = link.label === '...';
+
+                      if (isEllipsis) {
+                        return (
+                          <span
+                            key={idx}
+                            className="w-7 h-8 inline-flex items-center justify-center text-xs font-black text-slate-400 shrink-0 select-none"
+                          >
+                            ...
+                          </span>
+                        );
+                      }
+
+                      const prevNextContent = isPrev ? (
+                        <>
+                          <ChevronLeft className="w-4 h-4 shrink-0" />
+                          <span className="hidden sm:inline">Sebelumnya</span>
+                        </>
+                      ) : isNext ? (
+                        <>
+                          <span className="hidden sm:inline">Berikutnya</span>
+                          <ChevronRight className="w-4 h-4 shrink-0" />
+                        </>
+                      ) : null;
+
+                      if (!link.url) {
+                        return (
+                          <span
+                            key={idx}
+                            aria-disabled="true"
+                            className={`h-8 rounded-xl text-xs font-bold text-slate-300 bg-slate-50 border border-slate-200/80 shrink-0 inline-flex items-center justify-center cursor-not-allowed select-none ${
+                              isPrev || isNext ? 'px-2.5 sm:px-3 gap-1' : 'min-w-[34px] px-2'
+                            }`}
+                          >
+                            {isPrev || isNext ? prevNextContent : link.label}
+                          </span>
+                        );
+                      }
+
+                      if (link.active) {
+                        return (
+                          <span
+                            key={idx}
+                            aria-current="page"
+                            className="min-w-[34px] h-8 px-2 rounded-xl text-xs font-black bg-[#58CC02] text-white border-b-2 border-[#46A302] shadow-sm shrink-0 inline-flex items-center justify-center select-none"
+                          >
+                            {link.label}
+                          </span>
+                        );
+                      }
+
                       return (
-                        <span
+                        <Link
                           key={idx}
-                          className="px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 bg-slate-50"
+                          href={link.url}
+                          preserveState
+                          preserveScroll
+                          className={`h-8 rounded-xl text-xs font-black text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 hover:border-slate-300 shrink-0 inline-flex items-center justify-center transition-all active:translate-y-0.5 shadow-2xs ${
+                            isPrev || isNext ? 'px-2.5 sm:px-3 gap-1' : 'min-w-[34px] px-2'
+                          }`}
                         >
-                          {label}
-                        </span>
+                          {isPrev || isNext ? prevNextContent : link.label}
+                        </Link>
                       );
-                    }
-                    return (
-                      <Link
-                        key={idx}
-                        href={link.url}
-                        preserveState
-                        className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
-                          link.active
-                            ? 'bg-[#58CC02] text-white border-b-2 border-[#46A302]'
-                            : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
-                        }`}
-                      >
-                        {label}
-                      </Link>
-                    );
-                  })}
+                    })}
+                  </div>
                 </div>
               </div>
             )}
