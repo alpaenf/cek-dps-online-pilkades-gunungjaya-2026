@@ -8,7 +8,6 @@ interface MascotGlawuSectionProps {
   onScrollToSearch: () => void;
   mascotSrc?: string;
   isAdmin?: boolean;
-  onOpenMascotModal?: () => void;
 }
 
 export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
@@ -16,7 +15,6 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
   onScrollToSearch,
   mascotSrc,
   isAdmin = false,
-  onOpenMascotModal
 }) => {
   const [activeTab, setActiveTab] = useState<'filosofi' | 'pesan' | 'fakta'>('filosofi');
   const [cheerCount, setCheerCount] = useState(148);
@@ -142,21 +140,6 @@ export const MascotGlawuSection: React.FC<MascotGlawuSectionProps> = ({
           <p className="mt-3 text-slate-600 text-xs sm:text-base leading-relaxed font-medium">
             {config.mascot_desc || `Karakter sahabat pemilih yang ceria, berwibawa, dan sarat kearifan lokal. GLAWU hadir mengajak seluruh warga Desa ${config.desa || 'Gunungjaya'} mewujudkan Pilkades yang aman, damai, bermartabat, dan tanpa politik uang.`}
           </p>
-
-          {/* Quick Edit Button */}
-          {onOpenMascotModal && (
-            <div className="mt-4 flex items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={onOpenMascotModal}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#FFC800] hover:bg-[#e6b400] text-slate-900 font-black text-xs uppercase tracking-wider rounded-2xl border-b-4 border-[#E59B00] active:border-b-0 active:translate-y-1 shadow-sm transition cursor-pointer"
-                title="Edit Redaksi, Filosofi, Slogan & Balon Dialog Maskot"
-              >
-                <Edit3 className="w-4 h-4" />
-                <span>Edit Redaksi & Maskot</span>
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Main Grid: Visual Mascot on Left, Meaning & Interactive Tabs on Right */}

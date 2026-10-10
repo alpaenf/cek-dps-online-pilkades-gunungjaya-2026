@@ -12,7 +12,6 @@ import { ShareModal } from '@/Components/ShareModal';
 import { WatermarkBackground } from '@/Components/WatermarkBackground';
 import { Footer } from '@/Components/Footer';
 import { MascotGlawuSection } from '@/Components/MascotGlawuSection';
-import { MascotEditorModal } from '@/Components/MascotEditorModal';
 import { FloatingGlawuAssistant } from '@/Components/FloatingGlawuAssistant';
 import { DEFAULT_CONFIG, DEFAULT_TPS_LIST, executeDptCheck } from '@/data/mockDatabase';
 import { DEFAULT_VILLAGE_LOGO, DEFAULT_MASCOT_GLAWU } from '@/data/logoPresets';
@@ -66,7 +65,6 @@ export default function Home({
   const [isSheetGuideOpen, setIsSheetGuideOpen] = useState(false);
   const [isRecapModalOpen, setIsRecapModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [isMascotModalOpen, setIsMascotModalOpen] = useState(false);
 
   // Maskot & Logo Pilkades
   const mascotSrc = config.mascot_image || DEFAULT_MASCOT_GLAWU;
@@ -238,7 +236,6 @@ export default function Home({
               }}
               mascotSrc={mascotSrc}
               isAdmin={isAdmin}
-              onOpenMascotModal={() => setIsMascotModalOpen(true)}
             />
           </div>
         )}
@@ -289,13 +286,6 @@ export default function Home({
         onClose={() => setIsShareModalOpen(false)}
         config={config}
         mascotSrc={mascotSrc}
-      />
-
-      <MascotEditorModal
-        isOpen={isMascotModalOpen}
-        onClose={() => setIsMascotModalOpen(false)}
-        config={config}
-        isAdmin={isAdmin}
       />
 
       {/* Floating Mascot Assistant */}
