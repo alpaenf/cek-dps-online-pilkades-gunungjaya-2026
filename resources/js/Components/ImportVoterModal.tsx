@@ -1218,26 +1218,31 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                   </p>
                 </div>
 
-                {/* Grid Rincian Angka Transparan */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 max-w-3xl mx-auto pt-1">
-                  <div className="bg-white p-3 rounded-2xl border-2 border-slate-200">
+                {/* Grid Rincian Angka Transparan (5 Kotak Rekonsiliasi) */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 max-w-4xl mx-auto pt-1">
+                  <div className="bg-white p-3 rounded-2xl border-2 border-slate-200 text-center">
                     <span className="text-[10px] font-black uppercase text-slate-400 block">Total Baris File</span>
-                    <span className="text-base sm:text-xl font-black text-slate-800">{importResult.totalRowsInFile.toLocaleString('id-ID')}</span>
+                    <span className="text-base sm:text-lg font-black text-slate-800">{importResult.totalRowsInFile.toLocaleString('id-ID')}</span>
                     <span className="text-[10px] text-slate-400 block mt-0.5">Termasuk judul & spasi</span>
                   </div>
-                  <div className="bg-white p-3 rounded-2xl border-2 border-[#58CC02]/40">
-                    <span className="text-[10px] font-black uppercase text-[#58CC02] block">Pemilih Baru</span>
-                    <span className="text-base sm:text-xl font-black text-[#58CC02]">+{importResult.inserted.toLocaleString('id-ID')}</span>
-                    <span className="text-[10px] text-[#58CC02]/80 block mt-0.5">NIK baru masuk</span>
+                  <div className="bg-purple-50/70 p-3 rounded-2xl border-2 border-purple-200 text-center">
+                    <span className="text-[10px] font-black uppercase text-purple-700 block">Header / Kosong</span>
+                    <span className="text-base sm:text-lg font-black text-purple-700">{importResult.nonDataRowsCount.toLocaleString('id-ID')}</span>
+                    <span className="text-[10px] text-purple-600/80 block mt-0.5">Dilewati otomatis</span>
                   </div>
-                  <div className="bg-white p-3 rounded-2xl border-2 border-[#1CB0F6]/40">
-                    <span className="text-[10px] font-black uppercase text-[#1CB0F6] block">Diperbarui</span>
-                    <span className="text-base sm:text-xl font-black text-[#1CB0F6]">{importResult.updated.toLocaleString('id-ID')}</span>
-                    <span className="text-[10px] text-[#1CB0F6]/80 block mt-0.5">NIK ganda di-update</span>
+                  <div className="bg-white p-3 rounded-2xl border-2 border-[#58CC02]/40 text-center">
+                    <span className="text-[10px] font-black uppercase text-[#58CC02] block">Pemilih Baru (DPS)</span>
+                    <span className="text-base sm:text-lg font-black text-[#58CC02]">+{importResult.inserted.toLocaleString('id-ID')}</span>
+                    <span className="text-[10px] text-[#58CC02]/80 block mt-0.5">NIK unik masuk DPS</span>
                   </div>
-                  <div className={`bg-white p-3 rounded-2xl border-2 ${importResult.skipped > 0 ? 'border-amber-300 bg-amber-50/50' : 'border-slate-200'}`}>
-                    <span className={`text-[10px] font-black uppercase block ${importResult.skipped > 0 ? 'text-amber-600' : 'text-slate-500'}`}>Dilewati / Gagal</span>
-                    <span className={`text-base sm:text-xl font-black ${importResult.skipped > 0 ? 'text-amber-600' : 'text-slate-600'}`}>{importResult.skipped.toLocaleString('id-ID')}</span>
+                  <div className="bg-white p-3 rounded-2xl border-2 border-[#1CB0F6]/40 text-center">
+                    <span className="text-[10px] font-black uppercase text-[#1CB0F6] block">Data Ganda</span>
+                    <span className="text-base sm:text-lg font-black text-[#1CB0F6]">{importResult.updated.toLocaleString('id-ID')}</span>
+                    <span className="text-[10px] text-[#1CB0F6]/80 block mt-0.5">NIK ganda disinkron</span>
+                  </div>
+                  <div className={`bg-white p-3 rounded-2xl border-2 text-center col-span-2 sm:col-span-1 ${importResult.skipped > 0 ? 'border-amber-300 bg-amber-50/50' : 'border-slate-200'}`}>
+                    <span className={`text-[10px] font-black uppercase block ${importResult.skipped > 0 ? 'text-amber-600' : 'text-slate-500'}`}>Dilewati / Kurang</span>
+                    <span className={`text-base sm:text-lg font-black ${importResult.skipped > 0 ? 'text-amber-600' : 'text-slate-600'}`}>{importResult.skipped.toLocaleString('id-ID')}</span>
                     <span className="text-[10px] text-slate-400 block mt-0.5">Bisa dikoreksi manual</span>
                   </div>
                 </div>
@@ -1749,11 +1754,16 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 text-center">
                       <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200">
                         <span className="text-[10px] text-slate-400 font-black uppercase block">Baris di File</span>
                         <span className="text-sm sm:text-base font-black text-slate-800">{fileStats.totalRowsInFile.toLocaleString('id-ID')}</span>
                         <span className="text-[10px] text-slate-400 block mt-0.5">Termasuk judul & spasi</span>
+                      </div>
+                      <div className="p-2.5 bg-purple-50/70 rounded-xl border border-purple-200">
+                        <span className="text-[10px] text-purple-700 font-black uppercase block">Header / Kosong</span>
+                        <span className="text-sm sm:text-base font-black text-purple-700">{(fileStats.headerAndTitleRows + fileStats.emptyOrFooterRows).toLocaleString('id-ID')}</span>
+                        <span className="text-[10px] text-purple-600/80 block mt-0.5">Dilewati otomatis</span>
                       </div>
                       <div className="p-2.5 bg-[#E5F9D2] rounded-xl border border-[#58CC02]/40">
                         <span className="text-[10px] text-[#46A302] font-black uppercase block">Pemilih Unik Baru</span>
@@ -1765,7 +1775,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
                         <span className={`text-sm sm:text-base font-black ${fileStats.duplicateVotersCount > 0 ? 'text-[#1899D6]' : 'text-slate-600'}`}>{fileStats.duplicateVotersCount.toLocaleString('id-ID')}</span>
                         <span className="text-[10px] text-[#1899D6]/80 block mt-0.5">Diperbarui otomatis</span>
                       </div>
-                      <div className={`p-2.5 rounded-xl border ${fileStats.invalidVotersCount > 0 ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'}`}>
+                      <div className={`p-2.5 rounded-xl border col-span-2 sm:col-span-1 ${fileStats.invalidVotersCount > 0 ? 'bg-amber-50 border-amber-300' : 'bg-slate-50 border-slate-200'}`}>
                         <span className={`text-[10px] font-black uppercase block ${fileStats.invalidVotersCount > 0 ? 'text-amber-700' : 'text-slate-400'}`}>Dilewati (Data Kurang)</span>
                         <span className={`text-sm sm:text-base font-black ${fileStats.invalidVotersCount > 0 ? 'text-amber-700' : 'text-slate-600'}`}>{fileStats.invalidVotersCount.toLocaleString('id-ID')}</span>
                         <span className="text-[10px] text-amber-600 block mt-0.5">Bisa dikoreksi manual</span>
