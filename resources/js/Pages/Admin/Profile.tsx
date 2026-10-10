@@ -477,7 +477,7 @@ export default function AdminProfile({
               className="w-full sm:w-auto px-5 py-3 rounded-2xl bg-[#FF4B4B] hover:bg-[#e03d3d] text-white font-black text-xs uppercase tracking-wider border-b-4 border-[#EA2B2B] active:border-b-0 active:translate-y-1 transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer shrink-0"
             >
               <Trash2 className="w-4 h-4" />
-              <span>Reset Semua Data (0 Data)</span>
+              <span>Reset & Hapus Seluruh Data ({statsSummary.totalAll.toLocaleString('id-ID')})</span>
             </button>
           </div>
         </div>
@@ -594,7 +594,7 @@ export default function AdminProfile({
                   className="px-6 py-3 rounded-2xl bg-[#FF4B4B] hover:bg-[#e03d3d] text-white font-black text-xs uppercase tracking-wider border-b-4 border-[#EA2B2B] active:border-b-0 active:translate-y-1 transition-all shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span>{resetVoterForm.processing ? 'Sedang Mereset Data...' : 'Ya, Hapus Semua Data Sekarang'}</span>
+                  <span>{resetVoterForm.processing ? 'Sedang Mereset Data...' : `Ya, Hapus Semua (${statsSummary.totalAll.toLocaleString('id-ID')}) Data`}</span>
                 </button>
               </div>
             </form>
