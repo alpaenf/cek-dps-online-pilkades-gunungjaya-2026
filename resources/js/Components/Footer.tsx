@@ -87,20 +87,6 @@ export const Footer: React.FC<FooterProps> = ({
                   <span>Daftar TPS 1 s/d 5</span>
                 </button>
               </li>
-
-              {isAdmin && (
-                <>
-                  <li className="pt-2 border-t border-slate-100">
-                    <a
-                      href="/admin/dashboard"
-                      className="text-[#46A302] hover:text-[#58CC02] font-black transition-colors flex items-center gap-2 cursor-pointer"
-                    >
-                      <ShieldCheck className="w-3.5 h-3.5 text-[#58CC02]" />
-                      <span>Panel Admin (CRUD TPS & DPS)</span>
-                    </a>
-                  </li>
-                </>
-              )}
             </ul>
           </div>
 

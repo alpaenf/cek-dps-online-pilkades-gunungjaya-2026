@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { router } from '@inertiajs/react';
-import { Menu, X, Database, LogOut, Search, MapPin, Share2 } from 'lucide-react';
+import { Menu, X, Search, MapPin, Share2 } from 'lucide-react';
 
 interface HeaderProps {
   onOpenSheetGuide?: () => void;
@@ -18,7 +17,6 @@ export const Header: React.FC<HeaderProps> = ({
   currentLogo,
   activePage,
   onSelectPage,
-  isAdmin = false,
   onOpenShareModal
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -54,11 +52,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <h1 className="text-[13px] sm:text-[15px] font-black text-slate-900 tracking-tight leading-tight truncate">
                   PILKADES GUNUNGJAYA 2026
                 </h1>
-                {isAdmin && (
-                  <span className="text-[9px] font-black text-[#58CC02] bg-[#E5F9D2] border border-[#58CC02]/30 px-1.5 py-0.5 rounded-md leading-none">
-                    Admin
-                  </span>
-                )}
               </div>
               <p className="text-[10px] sm:text-xs font-semibold text-slate-500 tracking-tight leading-tight mt-0.5 flex items-center gap-1.5">
                 <span>Cek DPS Online Resmi</span>
@@ -110,30 +103,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>Bagikan</span>
               </button>
             )}
-
-            {/* Menu Admin Langsung Menuju CRUD */}
-            {isAdmin && (
-              <div className="flex items-center gap-2 ml-2 pl-3 border-l-2 border-slate-200">
-                <a
-                  href="/admin/dashboard"
-                  className="px-3.5 py-2 bg-[#58CC02] hover:bg-[#4ebb02] text-white rounded-xl transition border-b-2 border-[#46A302] text-xs font-black flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
-                  title="Panel Admin (CRUD TPS & DPS)"
-                >
-                  <Database className="w-4 h-4" />
-                  <span>Panel Admin (CRUD)</span>
-                </a>
-
-                <button
-                  type="button"
-                  onClick={() => router.post(route('logout'))}
-                  className="px-3 py-2 bg-slate-100 hover:bg-red-50 hover:text-[#FF4B4B] text-slate-700 font-bold border border-slate-200 rounded-xl text-xs flex items-center gap-1.5 transition cursor-pointer"
-                  title="Keluar dari akun admin"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            )}
           </nav>
 
           {/* Mobile Action Buttons */}
@@ -148,17 +117,6 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Share2 className="w-4 h-4 text-[#1CB0F6]" />
               </button>
-            )}
-
-            {isAdmin && (
-              <a
-                href="/admin/dashboard"
-                className="px-2.5 py-1.5 bg-[#58CC02] hover:bg-[#4ebb02] text-white rounded-xl text-xs font-black flex items-center gap-1 border-b-2 border-[#46A302] shadow-xs active:scale-95 cursor-pointer"
-                title="Buka Panel Admin CRUD"
-              >
-                <Database className="w-3.5 h-3.5" />
-                <span className="text-[11px] font-black">CRUD</span>
-              </a>
             )}
 
             <button
@@ -246,33 +204,6 @@ export const Header: React.FC<HeaderProps> = ({
                 <span>Bagikan Layanan</span>
               </span>
             </button>
-          )}
-
-          {isAdmin && (
-            <div className="pt-3 border-t border-slate-200 space-y-2">
-              <div className="flex items-center justify-between px-1">
-                <span className="text-[10px] font-black uppercase text-slate-400">Mode Admin Aktif</span>
-                <span className="text-[10px] bg-[#E5F9D2] text-[#46A302] font-black px-2 py-0.5 rounded-md">Panitia</span>
-              </div>
-              <a
-                href="/admin/dashboard"
-                className="w-full py-2.5 px-3.5 rounded-xl bg-[#58CC02] text-white font-black text-xs flex items-center justify-between border-b-2 border-[#46A302] shadow-xs cursor-pointer"
-              >
-                <span className="flex items-center gap-2">
-                  <Database className="w-4 h-4" />
-                  <span>Buka Panel Admin (CRUD TPS & DPS)</span>
-                </span>
-                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded font-black">Masuk</span>
-              </a>
-              <button
-                type="button"
-                onClick={() => router.post(route('logout'))}
-                className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-red-50 text-slate-700 hover:text-[#FF4B4B] font-bold text-xs flex items-center justify-center gap-1.5 border border-slate-200 transition cursor-pointer"
-              >
-                <LogOut className="w-3.5 h-3.5 text-[#FF4B4B]" />
-                <span>Logout Panitia</span>
-              </button>
-            </div>
           )}
         </div>
       )}

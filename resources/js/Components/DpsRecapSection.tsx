@@ -67,17 +67,6 @@ export const DpsRecapSection: React.FC<DpsRecapSectionProps> = ({
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
-            {isAdmin && (
-              <Link
-                href={route('admin.dashboard', { tab: 'dps' })}
-                className="px-4 py-2.5 rounded-2xl bg-[#58CC02] hover:bg-[#4ebb02] text-white font-black border-b-4 border-[#46A302] active:border-b-0 active:translate-y-1 text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
-                title="Kelola Data Pemilih di Database Admin"
-              >
-                <Database className="w-4 h-4" />
-                <span>Kelola DPS Real</span>
-              </Link>
-            )}
-
             <button
               type="button"
               onClick={() => setIsTableExpanded(!isTableExpanded)}
