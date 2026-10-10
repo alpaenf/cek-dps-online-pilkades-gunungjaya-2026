@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppSetting;
 use App\Models\ImportDuplicateVoter;
 use App\Models\PendingSkippedVoter;
 use App\Models\Tps;
@@ -360,15 +361,23 @@ class AdminVoterController extends Controller
 
             if ($resetFirst) {
                 Voter::query()->delete();
+                ImportDuplicateVoter::query()->delete();
+                PendingSkippedVoter::query()->delete();
             }
 
             $inserted = 0;
             $updated = 0;
             $skipped = 0;
+            $emptyRowsCount = 0;
+            $seenVotersInFile = [];
+            $duplicateRows = [];
+            $allTps = Tps::all()->keyBy('id');
 
             for ($i = $dataStartIndex; $i < count($rawRows); $i++) {
                 $row = $rawRows[$i];
                 if (empty(array_filter($row))) {
+                    $emptyRowsCount++;
+
                     continue;
                 }
 
@@ -384,6 +393,42 @@ class AdminVoterController extends Controller
                     continue;
                 }
 
+                $nik = $normalized['nik'];
+                $actualRowNumber = $i + 1;
+
+                if (isset($seenVotersInFile[$nik])) {
+                    $firstSeen = $seenVotersInFile[$nik];
+                    $isExact = strtoupper($normalized['nama']) === strtoupper($firstSeen['nama']);
+                    $duplicateRows[] = [
+                        'row_number' => $actualRowNumber,
+                        'nik' => $nik,
+                        'nama' => $normalized['nama'],
+                        'dusun' => $normalized['dusun'],
+                        'rt' => $normalized['rt'],
+                        'rw' => $normalized['rw'],
+                        'tps_id' => $normalized['tps_id'],
+                        'tps_name' => isset($allTps[$normalized['tps_id']]) ? $allTps[$normalized['tps_id']]->nomor_tps : null,
+                        'first_seen_row_number' => $firstSeen['row_number'],
+                        'first_seen_name' => $firstSeen['nama'],
+                        'first_seen_dusun' => $firstSeen['dusun'],
+                        'first_seen_rt' => $firstSeen['rt'],
+                        'first_seen_rw' => $firstSeen['rw'],
+                        'first_seen_tps_name' => isset($allTps[$firstSeen['tps_id']]) ? $allTps[$firstSeen['tps_id']]->nomor_tps : null,
+                        'status_match' => $isExact ? 'IDENTIK' : 'BEDA_NAMA',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                } else {
+                    $seenVotersInFile[$nik] = [
+                        'row_number' => $actualRowNumber,
+                        'nama' => $normalized['nama'],
+                        'dusun' => $normalized['dusun'],
+                        'rt' => $normalized['rt'],
+                        'rw' => $normalized['rw'],
+                        'tps_id' => $normalized['tps_id'],
+                    ];
+                }
+
                 $existing = Voter::where('nik', $normalized['nik'])->first();
                 if ($existing) {
                     if ($updateExisting) {
@@ -397,6 +442,17 @@ class AdminVoterController extends Controller
                     $inserted++;
                 }
             }
+
+            if (! empty($duplicateRows)) {
+                ImportDuplicateVoter::query()->delete();
+                foreach (array_chunk($duplicateRows, 300) as $chunk) {
+                    ImportDuplicateVoter::insert($chunk);
+                }
+            }
+
+            $nonDataCount = $dataStartIndex + $emptyRowsCount;
+            AppSetting::set('last_import_header_count', (string) $nonDataCount);
+            AppSetting::set('last_import_total_rows', (string) count($rawRows));
 
             DB::commit();
 
@@ -680,25 +736,43 @@ class AdminVoterController extends Controller
             PendingSkippedVoter::query()->delete();
         }
 
-        $insertedCount = 0;
+        if (empty($skippedList) || ! is_array($skippedList)) {
+            return response()->json([
+                'success' => true,
+                'inserted' => 0,
+                'total_pending' => PendingSkippedVoter::count(),
+                'message' => 'Daftar data terlewat kosong.',
+            ]);
+        }
+
+        $allTps = Tps::all();
+        $tpsMapById = $allTps->keyBy('id');
+        $tpsMapByNomor = $allTps->keyBy('nomor_tps');
+
+        $now = now();
+        $records = [];
         foreach ($skippedList as $item) {
             $rawNik = preg_replace('/\D/', '', (string) ($item['nik'] ?? ''));
             $nama = trim((string) ($item['nama'] ?? ''));
 
-            // Cari TPS yang cocok
             $tpsId = null;
             if (! empty($item['tps'])) {
-                if (is_numeric($item['tps'])) {
-                    $foundTps = Tps::find($item['tps']) ?: Tps::where('nomor_tps', (string) $item['tps'])->first();
-                    $tpsId = $foundTps?->id;
+                $rawTps = (string) $item['tps'];
+                if (isset($tpsMapById[$rawTps])) {
+                    $tpsId = $tpsMapById[$rawTps]->id;
+                } elseif (isset($tpsMapByNomor[$rawTps])) {
+                    $tpsId = $tpsMapByNomor[$rawTps]->id;
                 } else {
-                    $num = preg_replace('/\D/', '', (string) $item['tps']);
-                    $foundTps = Tps::where('nomor_tps', $num)->first();
-                    $tpsId = $foundTps?->id;
+                    $num = preg_replace('/\D/', '', $rawTps);
+                    if ($num && isset($tpsMapByNomor[$num])) {
+                        $tpsId = $tpsMapByNomor[$num]->id;
+                    } elseif ($num && isset($tpsMapByNomor["TPS {$num}"])) {
+                        $tpsId = $tpsMapByNomor["TPS {$num}"]->id;
+                    }
                 }
             }
 
-            PendingSkippedVoter::create([
+            $records[] = [
                 'row_number' => $item['rowNumber'] ?? null,
                 'nik' => $rawNik ?: ($item['nik'] ?? null),
                 'nama' => $nama === '(kosong)' ? '' : $nama,
@@ -713,17 +787,22 @@ class AdminVoterController extends Controller
                 'status' => $item['status'] ?? 'DPS',
                 'keterangan' => $item['keterangan'] ?? ($item['ket'] ?? null),
                 'reason' => $item['reason'] ?? 'Data belum lengkap',
-            ]);
-            $insertedCount++;
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        foreach (array_chunk($records, 300) as $chunk) {
+            PendingSkippedVoter::insert($chunk);
         }
 
         $totalPending = PendingSkippedVoter::count();
 
         return response()->json([
             'success' => true,
-            'inserted' => $insertedCount,
+            'inserted' => count($records),
             'total_pending' => $totalPending,
-            'message' => "Berhasil menyimpan {$insertedCount} data pemilih terlewat ke daftar draf.",
+            'message' => 'Berhasil menyimpan '.count($records).' data pemilih terlewat ke daftar draf.',
         ]);
     }
 
@@ -832,6 +911,15 @@ class AdminVoterController extends Controller
     {
         $duplicateList = $request->input('duplicate_voters', []);
         $clearPrevious = filter_var($request->input('clear_previous', true), FILTER_VALIDATE_BOOLEAN);
+        $headerCount = $request->input('header_count');
+        $totalRows = $request->input('total_rows');
+
+        if ($headerCount !== null) {
+            AppSetting::set('last_import_header_count', (string) (int) $headerCount);
+        }
+        if ($totalRows !== null) {
+            AppSetting::set('last_import_total_rows', (string) (int) $totalRows);
+        }
 
         if ($clearPrevious) {
             ImportDuplicateVoter::query()->delete();
@@ -846,28 +934,38 @@ class AdminVoterController extends Controller
             ]);
         }
 
-        $insertedCount = 0;
+        $allTps = Tps::all();
+        $tpsMapById = $allTps->keyBy('id');
+        $tpsMapByNomor = $allTps->keyBy('nomor_tps');
+
+        $now = now();
+        $records = [];
         foreach ($duplicateList as $item) {
             $rawNik = preg_replace('/\D/', '', (string) ($item['nik'] ?? ''));
             $nama = trim((string) ($item['nama'] ?? ''));
             $firstSeenName = trim((string) ($item['firstSeenName'] ?? ''));
 
-            // Cari TPS yang cocok
+            // Cari TPS yang cocok cepat di memory map
             $tpsId = null;
             if (! empty($item['tps'])) {
-                if (is_numeric($item['tps'])) {
-                    $foundTps = Tps::find($item['tps']) ?: Tps::where('nomor_tps', (string) $item['tps'])->first();
-                    $tpsId = $foundTps?->id;
+                $rawTps = (string) $item['tps'];
+                if (isset($tpsMapById[$rawTps])) {
+                    $tpsId = $tpsMapById[$rawTps]->id;
+                } elseif (isset($tpsMapByNomor[$rawTps])) {
+                    $tpsId = $tpsMapByNomor[$rawTps]->id;
                 } else {
-                    $num = preg_replace('/\D/', '', (string) $item['tps']);
-                    $foundTps = Tps::where('nomor_tps', $num)->first();
-                    $tpsId = $foundTps?->id;
+                    $num = preg_replace('/\D/', '', $rawTps);
+                    if ($num && isset($tpsMapByNomor[$num])) {
+                        $tpsId = $tpsMapByNomor[$num]->id;
+                    } elseif ($num && isset($tpsMapByNomor["TPS {$num}"])) {
+                        $tpsId = $tpsMapByNomor["TPS {$num}"]->id;
+                    }
                 }
             }
 
             $isExact = strtoupper($nama) === strtoupper($firstSeenName);
 
-            ImportDuplicateVoter::create([
+            $records[] = [
                 'row_number' => $item['rowNumber'] ?? null,
                 'nik' => $rawNik ?: ($item['nik'] ?? ''),
                 'nama' => $nama,
@@ -883,17 +981,22 @@ class AdminVoterController extends Controller
                 'first_seen_rw' => $item['firstSeenRw'] ?? null,
                 'first_seen_tps_name' => ! empty($item['firstSeenTps']) ? (string) $item['firstSeenTps'] : null,
                 'status_match' => $isExact ? 'IDENTIK' : 'BEDA_NAMA',
-            ]);
-            $insertedCount++;
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        foreach (array_chunk($records, 300) as $chunk) {
+            ImportDuplicateVoter::insert($chunk);
         }
 
         $totalDuplicates = ImportDuplicateVoter::count();
 
         return response()->json([
             'success' => true,
-            'inserted' => $insertedCount,
+            'inserted' => count($records),
             'total_duplicates' => $totalDuplicates,
-            'message' => "Berhasil menyimpan {$insertedCount} data ganda dari file Excel terakhir.",
+            'message' => 'Berhasil menyimpan '.count($records).' data ganda dari file Excel terakhir.',
         ]);
     }
 
@@ -908,7 +1011,7 @@ class AdminVoterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Seluruh riwayat data ganda berhasil dibersihkan.',
-                'remaining_count' => 0,
+                'total_duplicates' => 0,
             ]);
         }
 

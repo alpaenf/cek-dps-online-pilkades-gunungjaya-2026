@@ -225,8 +225,12 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
         return;
       }
     }
+    const hadResult = !!importResult;
     handleResetState();
     onClose();
+    if (hadResult) {
+      router.reload();
+    }
   };
 
   /**
@@ -887,13 +891,21 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
       }
 
       const nonDataCount = (fileStats?.headerAndTitleRows || 0) + (fileStats?.emptyOrFooterRows || 0);
+      const totalRowsFile = fileStats?.totalRowsInFile || totalRecords;
+
+      // Sync data ganda & data terlewat & metadata baris langsung ke server
+      setCurrentChunkInfo('Menyimpan riwayat data ganda & data terlewat...');
+      await syncDuplicateRowsToDatabase(duplicateInParsing, nonDataCount, totalRowsFile);
+      if (trueSkippedToCorrect.length > 0) {
+        await syncSkippedRowsToDatabase(trueSkippedToCorrect);
+      }
 
       setImportResult({
         inserted: totalInserted,
         updated: totalUpdated + (updateExisting ? 0 : backendDuplicateSkipped.length),
         skipped: trueSkippedToCorrect.length,
         totalVoterRows: fileStats?.totalVoterCandidateRows || (totalRecords + skippedInParsing.length),
-        totalRowsInFile: fileStats?.totalRowsInFile || totalRecords,
+        totalRowsInFile: totalRowsFile,
         nonDataRowsCount: nonDataCount,
       });
 
@@ -1081,9 +1093,11 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
   /**
    * Sync baris data ganda ke database agar muncul di tab "Data Ganda"
    */
-  const syncDuplicateRowsToDatabase = async (duplicateRows: DuplicateRowInfo[]) => {
-    if (duplicateRows.length === 0) return;
-
+  const syncDuplicateRowsToDatabase = async (
+    duplicateRows: DuplicateRowInfo[],
+    headerCount?: number,
+    totalRows?: number
+  ) => {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
     try {
@@ -1097,6 +1111,8 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
         },
         body: JSON.stringify({
           clear_previous: true,
+          header_count: headerCount !== undefined ? headerCount : ((fileStats?.headerAndTitleRows || 0) + (fileStats?.emptyOrFooterRows || 0)),
+          total_rows: totalRows !== undefined ? totalRows : (fileStats?.totalRowsInFile || 0),
           duplicate_voters: duplicateRows.map((r) => ({
             rowNumber: r.rowNumber,
             nik: r.nik,

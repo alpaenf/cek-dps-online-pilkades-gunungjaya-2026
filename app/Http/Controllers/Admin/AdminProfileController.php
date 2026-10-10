@@ -117,6 +117,8 @@ class AdminProfileController extends Controller
             Voter::query()->delete();
             ImportDuplicateVoter::query()->delete();
             PendingSkippedVoter::query()->delete();
+            AppSetting::set('last_import_header_count', '0');
+            AppSetting::set('last_import_total_rows', '0');
         });
 
         return redirect()->route('admin.profile.edit')->with('success', 'Seluruh data pemilih (DPS), riwayat data ganda, dan data terlewat berhasil direset bersih (0 data)!');

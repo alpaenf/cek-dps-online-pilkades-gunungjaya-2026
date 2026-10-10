@@ -148,6 +148,8 @@ interface AdminDashboardProps {
   pendingSkippedCount: number;
   importDuplicateVoters: ImportDuplicateVoterItem[];
   importDuplicateCount: number;
+  lastImportHeaderCount?: number;
+  lastImportTotalRows?: number;
 }
 
 export default function AdminDashboard({
@@ -162,6 +164,8 @@ export default function AdminDashboard({
   pendingSkippedCount,
   importDuplicateVoters,
   importDuplicateCount,
+  lastImportHeaderCount = 0,
+  lastImportTotalRows = 0,
 }: AdminDashboardProps) {
   const { flash } = usePage<PageProps>().props;
   const queryParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
@@ -169,6 +173,13 @@ export default function AdminDashboard({
   const [activeTab, setActiveTab] = useState<'dps' | 'tps' | 'redaksi' | 'terlewat' | 'ganda'>(initialTab);
   const [pendingCount, setPendingCount] = useState(pendingSkippedCount);
   const [duplicateCount, setDuplicateCount] = useState(importDuplicateCount);
+  const [headerCount, setHeaderCount] = useState(
+    lastImportHeaderCount > 0
+      ? lastImportHeaderCount
+      : (lastImportTotalRows > 0 && lastImportTotalRows > stats.totalDps + importDuplicateCount + pendingSkippedCount
+          ? lastImportTotalRows - (stats.totalDps + importDuplicateCount + pendingSkippedCount)
+          : 0)
+  );
 
   // Redaksi & Mascot Form
   const mascotForm = useForm<MascotSettings>({
@@ -527,14 +538,15 @@ export default function AdminDashboard({
 
         {/* Audit Rekonsiliasi Import Excel & Stat Cards */}
         {(() => {
-          const totalRawExcelRows = stats.totalDps + duplicateCount + pendingCount;
+          const totalRawExcelRows = stats.totalDps + duplicateCount + pendingCount + headerCount;
           const pctBersih = totalRawExcelRows > 0 ? ((stats.totalDps / totalRawExcelRows) * 100).toFixed(1) : '100';
+          const pctHeader = totalRawExcelRows > 0 ? ((headerCount / totalRawExcelRows) * 100).toFixed(1) : '0';
           const pctGanda = totalRawExcelRows > 0 ? ((duplicateCount / totalRawExcelRows) * 100).toFixed(1) : '0';
           const pctTerlewat = totalRawExcelRows > 0 ? ((pendingCount / totalRawExcelRows) * 100).toFixed(1) : '0';
 
           return (
             <div className="space-y-4">
-              {/* Row 1: 4 Kotak Rekonsiliasi Data Import Excel */}
+              {/* Row 1: 5 Kotak Rekonsiliasi Data Import Excel */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[11px] sm:text-xs font-black uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
@@ -542,13 +554,13 @@ export default function AdminDashboard({
                     <span>Rekonsiliasi & Audit Data Import Excel</span>
                   </span>
                   <span className="hidden sm:inline-flex text-[11px] font-bold text-slate-400">
-                    Mentah ({totalRawExcelRows.toLocaleString('id-ID')}) = Bersih ({stats.totalDps.toLocaleString('id-ID')}) + Ganda ({duplicateCount.toLocaleString('id-ID')}) + Terlewat ({pendingCount.toLocaleString('id-ID')})
+                    Mentah ({totalRawExcelRows.toLocaleString('id-ID')}) = Header/Kosong ({headerCount.toLocaleString('id-ID')}) + Bersih ({stats.totalDps.toLocaleString('id-ID')}) + Ganda ({duplicateCount.toLocaleString('id-ID')}) + Terlewat ({pendingCount.toLocaleString('id-ID')})
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
                   {/* Kotak 1: Total Data Mentah Excel */}
-                  <div className="bg-white border-2 border-b-4 border-indigo-200 rounded-3xl p-4 sm:p-5 shadow-xs hover:border-indigo-300 transition-all">
+                  <div className="bg-white border-2 border-b-4 border-indigo-200 rounded-3xl p-3.5 sm:p-5 shadow-xs hover:border-indigo-300 transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-indigo-600">
                         Total Mentah Excel
@@ -557,16 +569,34 @@ export default function AdminDashboard({
                         <FileSpreadsheet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
                     </div>
-                    <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                    <div className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
                       {totalRawExcelRows.toLocaleString('id-ID')}
                     </div>
                     <span className="text-[10px] sm:text-[11px] font-bold text-indigo-600 mt-1 block truncate">
-                      DPS + Ganda + Terlewat
+                      DPS + Ganda + Kosong + Terlewat
                     </span>
                   </div>
 
-                  {/* Kotak 2: Total Data Bersih (DPS) */}
-                  <div className="bg-white border-2 border-b-4 border-green-200 rounded-3xl p-4 sm:p-5 shadow-xs hover:border-[#58CC02] transition-all">
+                  {/* Kotak 2: Header / Baris Kosong */}
+                  <div className="bg-white border-2 border-b-4 border-purple-200 rounded-3xl p-3.5 sm:p-5 shadow-xs hover:border-purple-300 transition-all">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-purple-700">
+                        Header / Kosong
+                      </span>
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#7E22CE] text-white flex items-center justify-center shrink-0">
+                        <Info className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </div>
+                    </div>
+                    <div className="text-xl sm:text-2xl lg:text-3xl font-black text-purple-700 tracking-tight">
+                      {headerCount.toLocaleString('id-ID')}
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-purple-600 mt-1 block truncate">
+                      {pctHeader}% Dilewati Otomatis
+                    </span>
+                  </div>
+
+                  {/* Kotak 3: Total Data Bersih (DPS) */}
+                  <div className="bg-white border-2 border-b-4 border-green-200 rounded-3xl p-3.5 sm:p-5 shadow-xs hover:border-[#58CC02] transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-[#46A302]">
                         Total Data Bersih (DPS)
@@ -575,7 +605,7 @@ export default function AdminDashboard({
                         <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
                     </div>
-                    <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                    <div className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
                       {stats.totalDps.toLocaleString('id-ID')}
                     </div>
                     <span className="text-[10px] sm:text-[11px] font-bold text-[#46A302] mt-1 block truncate">
@@ -583,8 +613,8 @@ export default function AdminDashboard({
                     </span>
                   </div>
 
-                  {/* Kotak 3: Total Data Ganda / Duplikat */}
-                  <div className="bg-white border-2 border-b-4 border-sky-200 rounded-3xl p-4 sm:p-5 shadow-xs hover:border-[#1CB0F6] transition-all">
+                  {/* Kotak 4: Total Data Ganda */}
+                  <div className="bg-white border-2 border-b-4 border-sky-200 rounded-3xl p-3.5 sm:p-5 shadow-xs hover:border-[#1CB0F6] transition-all">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-[#1899D6]">
                         Total Data Ganda
@@ -593,7 +623,7 @@ export default function AdminDashboard({
                         <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
                     </div>
-                    <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                    <div className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
                       {duplicateCount.toLocaleString('id-ID')}
                     </div>
                     <span className="text-[10px] sm:text-[11px] font-bold text-[#1899D6] mt-1 block truncate">
@@ -601,8 +631,8 @@ export default function AdminDashboard({
                     </span>
                   </div>
 
-                  {/* Kotak 4: Total Data Terlewat / Draf */}
-                  <div className="bg-white border-2 border-b-4 border-amber-200 rounded-3xl p-4 sm:p-5 shadow-xs hover:border-[#FF9600] transition-all">
+                  {/* Kotak 5: Total Data Terlewat */}
+                  <div className="bg-white border-2 border-b-4 border-amber-200 rounded-3xl p-3.5 sm:p-5 shadow-xs hover:border-[#FF9600] transition-all col-span-2 sm:col-span-1">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-[#E07700]">
                         Total Data Terlewat
@@ -611,7 +641,7 @@ export default function AdminDashboard({
                         <AlertTriangle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       </div>
                     </div>
-                    <div className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                    <div className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">
                       {pendingCount.toLocaleString('id-ID')}
                     </div>
                     <span className="text-[10px] sm:text-[11px] font-bold text-[#E07700] mt-1 block truncate">

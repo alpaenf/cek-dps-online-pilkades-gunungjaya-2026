@@ -117,6 +117,13 @@ class AdminDashboardController extends Controller
             'pengumuman' => $allSettings['pengumuman'] ?? 'Pengecekan DPS Online telah dibuka. Pastikan NIK Anda terdaftar!',
         ];
 
+        $lastImportHeaderCount = (int) AppSetting::get('last_import_header_count', 0);
+        $lastImportTotalRows = (int) AppSetting::get('last_import_total_rows', 0);
+
+        if ($lastImportHeaderCount === 0 && $lastImportTotalRows > 0) {
+            $lastImportHeaderCount = max(0, $lastImportTotalRows - ($totalDps + $importDuplicateCount + $pendingSkippedCount));
+        }
+
         return Inertia::render('Admin/Dashboard', [
             'stats' => [
                 'totalTps' => $totalTps,
@@ -131,6 +138,8 @@ class AdminDashboardController extends Controller
             'pendingSkippedCount' => $pendingSkippedCount,
             'importDuplicateVoters' => $importDuplicateVoters,
             'importDuplicateCount' => $importDuplicateCount,
+            'lastImportHeaderCount' => $lastImportHeaderCount,
+            'lastImportTotalRows' => $lastImportTotalRows,
             'filters' => [
                 'search' => $search ?? '',
                 'tps_id' => $tpsFilter ?? 'all',
