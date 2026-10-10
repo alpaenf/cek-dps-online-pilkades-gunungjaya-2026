@@ -123,7 +123,7 @@ export const SearchResult: React.FC<SearchResultProps> = ({
                 <Calendar className="w-5 h-5 text-[#1CB0F6] shrink-0 mt-0.5" />
                 <div>
                   <p className="font-bold leading-relaxed text-slate-800">
-                    Harap datang ke lokasi TPS pada hari pemungutan suara dengan membawa e-KTP atau Kartu Keluarga asli.
+                    Harap datang ke lokasi TPS pada hari pemungutan suara 09 November 2026 dengan membawa Undangan dari Panitia dan E-KTP Asli atau EKTP IKD.
                   </p>
                   <p className="text-xs text-[#1899D6] font-bold mt-1">
                     Jadwal Pemungutan Suara: <strong>{config.tanggal_pemungutan}</strong>
