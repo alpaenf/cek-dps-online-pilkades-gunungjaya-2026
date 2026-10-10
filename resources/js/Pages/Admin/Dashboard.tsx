@@ -181,11 +181,9 @@ export default function AdminDashboard({
   const [pendingCount, setPendingCount] = useState(pendingSkippedCount);
   const [duplicateCount, setDuplicateCount] = useState(importDuplicateCount);
   const [headerCount, setHeaderCount] = useState(
-    lastImportHeaderCount > 0
+    lastImportHeaderCount > 0 && lastImportHeaderCount <= 10
       ? lastImportHeaderCount
-      : (lastImportTotalRows > 0 && lastImportTotalRows > stats.totalDps + importDuplicateCount + pendingSkippedCount
-          ? lastImportTotalRows - (stats.totalDps + importDuplicateCount + pendingSkippedCount)
-          : 0)
+      : (stats.totalDps > 0 ? 1 : 0)
   );
 
   // Redaksi & Mascot Form

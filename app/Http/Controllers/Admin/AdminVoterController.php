@@ -954,12 +954,17 @@ class AdminVoterController extends Controller
         $headerCount = $request->input('header_count');
         $totalRows = $request->input('total_rows');
 
-        if ($headerCount !== null) {
-            AppSetting::set('last_import_header_count', (string) (int) $headerCount);
-        }
-        if ($totalRows !== null) {
-            AppSetting::set('last_import_total_rows', (string) (int) $totalRows);
-        }
+        $safeHeaderCount = ($headerCount !== null && (int) $headerCount > 0 && (int) $headerCount <= 10)
+            ? (int) $headerCount
+            : 1;
+
+        $calculatedDataRows = Voter::count() + count($duplicateList) + PendingSkippedVoter::count();
+        $safeTotalRows = $totalRows !== null && (int) $totalRows > 0 && (int) $totalRows <= ($calculatedDataRows + $safeHeaderCount + 50)
+            ? (int) $totalRows
+            : ($calculatedDataRows + $safeHeaderCount);
+
+        AppSetting::set('last_import_header_count', (string) $safeHeaderCount);
+        AppSetting::set('last_import_total_rows', (string) $safeTotalRows);
 
         if ($clearPrevious) {
             ImportDuplicateVoter::query()->delete();

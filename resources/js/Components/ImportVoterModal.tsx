@@ -677,6 +677,7 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
         setHeaderColumns(primaryHeaders);
 
         const totalVoterCandidateRows = validVoters.length + skippedVoters.length;
+        const totalActiveFileRows = totalVoterCandidateRows + (totalHeaderAndTitleRows > 0 ? totalHeaderAndTitleRows : 1);
 
         if (totalVoterCandidateRows === 0) {
           throw new Error('Tidak ada baris data pemilih yang ditemukan dalam berkas Excel.');
@@ -689,9 +690,9 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
         setShowSkippedWarning(skippedVoters.length > 0);
 
         setFileStats({
-          totalRowsInFile,
-          headerAndTitleRows: totalHeaderAndTitleRows,
-          emptyOrFooterRows: totalEmptyOrFooterRows,
+          totalRowsInFile: totalActiveFileRows,
+          headerAndTitleRows: totalHeaderAndTitleRows > 0 ? totalHeaderAndTitleRows : 1,
+          emptyOrFooterRows: 0,
           totalVoterCandidateRows,
           validVotersCount: validVoters.length,
           uniqueVotersCount: seenNikMap.size,

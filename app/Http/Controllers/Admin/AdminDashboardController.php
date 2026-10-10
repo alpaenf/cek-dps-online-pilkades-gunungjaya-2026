@@ -121,21 +121,18 @@ class AdminDashboardController extends Controller
         ];
 
         $rawHeaderCount = AppSetting::get('last_import_header_count');
-        $rawTotalRows = AppSetting::get('last_import_total_rows');
+        $headerCountInt = $rawHeaderCount !== null && $rawHeaderCount !== '' ? (int) $rawHeaderCount : null;
 
-        if ($rawHeaderCount !== null && $rawHeaderCount !== '') {
-            $lastImportHeaderCount = (int) $rawHeaderCount;
+        if ($headerCountInt !== null && $headerCountInt >= 1 && $headerCountInt <= 10) {
+            $lastImportHeaderCount = $headerCountInt;
         } elseif ($totalDps > 0) {
             $lastImportHeaderCount = 1;
         } else {
             $lastImportHeaderCount = 0;
         }
 
-        if ($rawTotalRows !== null && $rawTotalRows !== '') {
-            $lastImportTotalRows = (int) $rawTotalRows;
-        } else {
-            $lastImportTotalRows = $totalDps + $importDuplicateCount + $pendingSkippedCount + $lastImportHeaderCount;
-        }
+        $calculatedDataRows = $totalDps + $importDuplicateCount + $pendingSkippedCount;
+        $lastImportTotalRows = $calculatedDataRows > 0 ? ($calculatedDataRows + $lastImportHeaderCount) : 0;
 
         return Inertia::render('Admin/Dashboard', [
             'stats' => [
