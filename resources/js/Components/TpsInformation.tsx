@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MapPin, Users, Info, ArrowLeft, Clock, CheckCircle2 } from 'lucide-react';
-import { TpsItem, PilkadesConfig } from '../types/pilkades';
+import { TpsItem, PilkadesConfig, getPhaseInfo } from '../types/pilkades';
 
 interface TpsInformationProps {
   tpsList: TpsItem[];
@@ -10,6 +10,7 @@ interface TpsInformationProps {
 
 export const TpsInformation: React.FC<TpsInformationProps> = ({ tpsList, config, onBackToCekDps }) => {
   const [selectedTpsFilter, setSelectedTpsFilter] = useState<string>('all');
+  const phase = getPhaseInfo(config?.dataPhase);
 
   const formatWilayahCakupan = (rt: string, rw: string) => {
     const cleanRt = (rt || '').trim();
@@ -176,7 +177,7 @@ export const TpsInformation: React.FC<TpsInformationProps> = ({ tpsList, config,
         <div className="p-4 rounded-2xl bg-white border-2 border-b-4 border-slate-200 flex items-start gap-3 text-xs text-slate-600 font-medium shadow-xs">
           <Info className="w-5 h-5 text-[#1CB0F6] shrink-0 mt-0.5" />
           <p className="leading-relaxed">
-            Penetapan lokasi TPS warga didasarkan pada data alamat kependudukan yang tercantum pada Daftar Pemilih Sementara (DPS). Pastikan Anda hadir di lokasi TPS yang tepat sebelum pukul 13.00 WIB.
+            Penetapan lokasi TPS warga didasarkan pada data alamat kependudukan yang tercantum pada {phase.fullName}. Pastikan Anda hadir di lokasi TPS yang tepat sebelum pukul 13.00 WIB.
           </p>
         </div>
       </div>

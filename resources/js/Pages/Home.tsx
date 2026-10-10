@@ -15,7 +15,7 @@ import { MascotGlawuSection } from '@/Components/MascotGlawuSection';
 import { FloatingGlawuAssistant } from '@/Components/FloatingGlawuAssistant';
 import { DEFAULT_CONFIG, DEFAULT_TPS_LIST, executeDptCheck } from '@/data/mockDatabase';
 import { DEFAULT_VILLAGE_LOGO, DEFAULT_MASCOT_GLAWU } from '@/data/logoPresets';
-import { DptPublicResult, PilkadesConfig, TpsItem, DpsRecapData } from '@/types/pilkades';
+import { DptPublicResult, PilkadesConfig, TpsItem, DpsRecapData, getPhaseInfo } from '@/types/pilkades';
 import { DEFAULT_DPS_RECAP, applyTpsLocationsToRecap } from '@/data/dpsRecapData';
 import { PageProps } from '@/types';
 
@@ -152,16 +152,18 @@ export default function Home({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const phase = getPhaseInfo(config.dataPhase);
+
   return (
     <div className="min-h-screen bg-[#F7F9FA] flex flex-col text-slate-800 selection:bg-[#58CC02] selection:text-white relative font-sans">
       <Head>
-        <title>{`Cek DPS Online - ${config.nama_kegiatan} | Desa ${config.desa}`}</title>
-        <meta name="description" content={`Layanan Resmi Pengecekan Daftar Pemilih Sementara (DPS) & DPT Pemilihan Kepala Desa ${config.desa} Tahun ${config.tahun}.`} />
+        <title>{`Cek ${phase.code} Online - ${config.nama_kegiatan} | Desa ${config.desa}`}</title>
+        <meta name="description" content={`Layanan Resmi Pengecekan ${phase.fullName} Pemilihan Kepala Desa ${config.desa} Tahun ${config.tahun}.`} />
         <link rel="preload" as="image" href={mascotSrc} />
       </Head>
 
       {/* Duolingo Splash Screen saat user buka web */}
-      <DuolingoSplashScreen mascotSrc={mascotSrc} desa={config.desa} />
+      <DuolingoSplashScreen mascotSrc={mascotSrc} desa={config.desa} dataPhase={config.dataPhase} />
 
       {/* Clean Duolingo Dot Grid Background */}
       <WatermarkBackground />
@@ -174,6 +176,7 @@ export default function Home({
         onSelectPage={handleSwitchPage}
         isAdmin={isAdmin}
         onOpenShareModal={() => setIsShareModalOpen(true)}
+        dataPhase={config.dataPhase}
       />
 
       {/* Toast Notification */}

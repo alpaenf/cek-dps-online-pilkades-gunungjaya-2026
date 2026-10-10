@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Share2, Copy, Check, MessageCircle, Globe, Sparkles } from 'lucide-react';
-import { PilkadesConfig } from '../types/pilkades';
+import { PilkadesConfig, getPhaseInfo } from '../types/pilkades';
 import { DEFAULT_MASCOT_GLAWU } from '../data/logoPresets';
 
 interface ShareModalProps {
@@ -17,11 +17,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   mascotSrc
 }) => {
   const [copied, setCopied] = useState(false);
+  const phase = getPhaseInfo(config?.dataPhase);
 
   if (!isOpen) return null;
 
   const currentUrl = typeof window !== 'undefined' ? window.location.origin : 'https://gunungjaya.desa.id';
-  const shareText = `Halo Warga Desa ${config?.desa || 'Gunungjaya'}! Ayo periksa hak pilih Anda dalam Pilkades ${config?.desa || 'Gunungjaya'} 2026 secara mandiri melalui Cek DPS Online resmi: ${currentUrl}`;
+  const shareText = `Halo Warga Desa ${config?.desa || 'Gunungjaya'}! Ayo periksa hak pilih Anda dalam Pilkades ${config?.desa || 'Gunungjaya'} 2026 secara mandiri melalui Cek ${phase.code} Online resmi: ${currentUrl}`;
 
   const handleCopy = () => {
     if (navigator?.clipboard) {
@@ -88,7 +89,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               Pilkades {config?.desa || 'Gunungjaya'} 2026
             </span>
             <p className="font-extrabold text-slate-800 leading-tight">
-              Pengecekan Daftar Pemilih Sementara (DPS) Online Resmi
+              Pengecekan {phase.fullName} Online Resmi
             </p>
             <p className="text-slate-500 font-medium text-[11px]">
               Cukup masukkan 16 digit NIK KTP-el Anda.

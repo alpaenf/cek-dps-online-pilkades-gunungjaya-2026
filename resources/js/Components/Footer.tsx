@@ -1,6 +1,6 @@
 import React from 'react';
 import { MapPin, Phone, FileSpreadsheet, ImageIcon, Lock, Search, ShieldCheck } from 'lucide-react';
-import { PilkadesConfig } from '../types/pilkades';
+import { PilkadesConfig, getPhaseInfo } from '../types/pilkades';
 
 interface FooterProps {
   config: PilkadesConfig;
@@ -21,6 +21,7 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenAdminModal,
   onSelectPage
 }) => {
+  const phase = getPhaseInfo(config.dataPhase);
   const handleNavClick = (page: 'cek-dps' | 'informasi-tps') => {
     if (onSelectPage) {
       onSelectPage(page);
@@ -57,7 +58,7 @@ export const Footer: React.FC<FooterProps> = ({
             </div>
 
             <p className="text-xs text-slate-500 leading-relaxed font-medium">
-              Layanan resmi pengecekan Daftar Pemilih Sementara (DPS) & DPT Pemilihan Kepala Desa Gunungjaya, Kecamatan Belik, Kabupaten Pemalang.
+              Layanan resmi pengecekan {phase.fullName} Pemilihan Kepala Desa {config.desa || 'Gunungjaya'}, Kecamatan {config.kecamatan || 'Belik'}, Kabupaten {config.kabupaten || 'Pemalang'}.
             </p>
           </div>
 
@@ -74,7 +75,7 @@ export const Footer: React.FC<FooterProps> = ({
                   className="text-slate-600 hover:text-[#58CC02] transition-colors flex items-center gap-2 cursor-pointer"
                 >
                   <Search className="w-3.5 h-3.5 text-[#58CC02]" />
-                  <span>Cek DPS Online</span>
+                  <span>Cek {phase.code} Online</span>
                 </button>
               </li>
               <li>

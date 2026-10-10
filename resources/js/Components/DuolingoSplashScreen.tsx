@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { Sparkles, CheckCircle2, ShieldCheck, ArrowRight } from 'lucide-react';
 import { DEFAULT_MASCOT_GLAWU } from '../data/logoPresets';
+import { getPhaseInfo } from '../types/pilkades';
 
 interface DuolingoSplashScreenProps {
   mascotSrc?: string;
   desa?: string;
   onComplete?: () => void;
+  dataPhase?: string;
 }
 
 export const DuolingoSplashScreen: React.FC<DuolingoSplashScreenProps> = ({
   mascotSrc,
   desa = 'Gunungjaya',
   onComplete,
+  dataPhase,
 }) => {
+  const phase = getPhaseInfo(dataPhase);
   // Hanya tampil sekali per sesi browser agar tidak memperlambat saat refresh
   const [isVisible, setIsVisible] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -138,10 +142,10 @@ export const DuolingoSplashScreen: React.FC<DuolingoSplashScreenProps> = ({
         {/* Headline */}
         <div className="mt-6 space-y-1.5">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">
-            CEK DPS ONLINE
+            CEK {phase.code} ONLINE
           </h1>
           <p className="text-xs sm:text-sm font-extrabold text-white/90">
-            Layanan Resmi Pengecekan Daftar Pemilih Sementara
+            Layanan Resmi Pengecekan {phase.name}
           </p>
         </div>
       </main>

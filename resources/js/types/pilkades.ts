@@ -92,3 +92,41 @@ export interface DpsRecapData {
   tpsStats: DpsTpsStat[];
   lastUpdated?: string;
 }
+
+export interface PhaseInfo {
+  code: string;
+  name: string;
+  fullName: string;
+}
+
+export function getPhaseInfo(phase?: string): PhaseInfo {
+  const code = (phase || 'DPS').toUpperCase();
+  switch (code) {
+    case 'DPT':
+      return {
+        code: 'DPT',
+        name: 'Daftar Pemilih Tetap',
+        fullName: 'Daftar Pemilih Tetap (DPT)',
+      };
+    case 'DPSHP':
+      return {
+        code: 'DPSHP',
+        name: 'Daftar Pemilih Sementara Hasil Perbaikan',
+        fullName: 'Daftar Pemilih Sementara Hasil Perbaikan (DPSHP)',
+      };
+    case 'DPTB':
+      return {
+        code: 'DPTb',
+        name: 'Daftar Pemilih Tambahan',
+        fullName: 'Daftar Pemilih Tambahan (DPTb)',
+      };
+    case 'DPS':
+    default:
+      return {
+        code: 'DPS',
+        name: 'Daftar Pemilih Sementara',
+        fullName: 'Daftar Pemilih Sementara (DPS)',
+      };
+  }
+}
+

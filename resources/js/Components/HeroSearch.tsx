@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, AlertCircle, Loader2, CheckCircle2, ShieldCheck, Edit3, Sparkles, X, RefreshCw, Wrench, Database } from 'lucide-react';
 import { DEFAULT_MASCOT_GLAWU } from '../data/logoPresets';
 import { DpsRecapSection } from './DpsRecapSection';
-import { PilkadesConfig, DpsRecapData, TpsItem } from '../types/pilkades';
+import { PilkadesConfig, DpsRecapData, TpsItem, getPhaseInfo } from '../types/pilkades';
 import { DEFAULT_DPS_RECAP } from '../data/dpsRecapData';
 
 interface HeroSearchProps {
@@ -44,6 +44,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
 }) => {
   const [nikInput, setNikInput] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const phase = getPhaseInfo(config?.dataPhase);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value;
@@ -130,7 +131,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
                 Sugeng Rawuh Warga Desa {config?.desa || 'Gunungjaya'}!
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 mt-1.5 sm:mt-2 leading-relaxed font-medium">
-                Saya <strong>{config?.mascot_name || 'GLAWU'}</strong>, maskot resmi Pilkades {config?.desa || 'Gunungjaya'} {config?.tahun || '2026'}. Masukkan <strong>16 digit NIK</strong> Anda untuk memeriksa hak suara dalam <strong>Daftar Pemilih <span className="whitespace-nowrap">Sementara ({config?.dataPhase || 'DPS'}).</span></strong>
+                Saya <strong>{config?.mascot_name || 'GLAWU'}</strong>, maskot resmi Pilkades {config?.desa || 'Gunungjaya'} {config?.tahun || '2026'}. Masukkan <strong>16 digit NIK</strong> Anda untuk memeriksa hak suara dalam <strong><span className="whitespace-nowrap">{phase.fullName}.</span></strong>
               </p>
 
               <div className="mt-3 sm:mt-4 pt-3 border-t border-slate-100 flex flex-wrap gap-2 justify-center md:justify-start text-xs font-bold text-slate-600">
@@ -332,7 +333,7 @@ export const HeroSearch: React.FC<HeroSearchProps> = ({
                           GLAWU Sedang Mencari Data Anda...
                         </h4>
                         <p className="text-xs sm:text-sm text-slate-600 font-semibold mt-0.5">
-                          Mencocokkan NIK <span className="font-black text-[#15803D] tracking-wider bg-white px-2 py-0.5 rounded-lg border border-[#86EFAC]">{nikInput}</span> dengan Daftar Pemilih Sementara (DPS)...
+                          Mencocokkan NIK <span className="font-black text-[#15803D] tracking-wider bg-white px-2 py-0.5 rounded-lg border border-[#86EFAC]">{nikInput}</span> dengan {phase.fullName}...
                         </p>
                       </div>
 

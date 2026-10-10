@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Menu, X, Search, MapPin, Share2 } from 'lucide-react';
+import { getPhaseInfo } from '@/types/pilkades';
 
 interface HeaderProps {
   onOpenSheetGuide?: () => void;
@@ -11,15 +12,18 @@ interface HeaderProps {
   onOpenAdminModal?: () => void;
   onOpenMascotModal?: () => void;
   onOpenShareModal?: () => void;
+  dataPhase?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   currentLogo,
   activePage,
   onSelectPage,
-  onOpenShareModal
+  onOpenShareModal,
+  dataPhase,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const phase = getPhaseInfo(dataPhase);
 
   const handleNav = (page: 'cek-dps' | 'informasi-tps') => {
     onSelectPage(page);
@@ -54,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </h1>
               </div>
               <p className="text-[10px] sm:text-xs font-semibold text-slate-500 tracking-tight leading-tight mt-0.5 flex items-center gap-1.5">
-                <span>Cek DPS Online Resmi</span>
+                <span>Cek {phase.code} Online Resmi</span>
                 <span className="inline-block w-1 h-1 rounded-full bg-slate-300"></span>
                 <span className="text-[#58CC02] font-bold">Desa Gunungjaya</span>
               </p>
@@ -72,7 +76,7 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               <Search className="w-4 h-4" />
-              <span>Cek DPS Online</span>
+              <span>Cek {phase.code} Online</span>
             </button>
 
             <button
@@ -97,7 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
                 type="button"
                 onClick={onOpenShareModal}
                 className="px-3.5 py-2.5 text-xs font-black uppercase tracking-wider rounded-2xl bg-white hover:bg-slate-100 text-slate-700 border-2 border-b-4 border-slate-200 transition-all cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                title="Bagikan Layanan Cek DPS ke Warga"
+                title={`Bagikan Layanan Cek ${phase.code} ke Warga`}
               >
                 <Share2 className="w-4 h-4 text-[#1CB0F6]" />
                 <span>Bagikan</span>
@@ -142,7 +146,7 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               <Search className="w-3.5 h-3.5" />
-              <span>Cek DPS</span>
+              <span>Cek {phase.code}</span>
             </button>
             <button
               type="button"
@@ -173,7 +177,7 @@ export const Header: React.FC<HeaderProps> = ({
           >
             <span className="flex items-center gap-2">
               <Search className="w-4 h-4" />
-              <span>Cek DPS Online</span>
+              <span>Cek {phase.code} Online</span>
             </span>
           </button>
 

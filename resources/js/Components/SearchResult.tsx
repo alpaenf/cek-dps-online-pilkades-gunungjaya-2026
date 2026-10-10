@@ -1,6 +1,6 @@
 import React from 'react';
 import { CheckCircle2, AlertTriangle, ArrowLeft, Phone, Calendar, Sparkles, Share2, MapPin, Info } from 'lucide-react';
-import { DptPublicResult, PilkadesConfig, TpsItem } from '../types/pilkades';
+import { DptPublicResult, PilkadesConfig, TpsItem, getPhaseInfo } from '../types/pilkades';
 import { DEFAULT_MASCOT_GLAWU, DEFAULT_MASCOT_GLAWU_GUIDE } from '../data/logoPresets';
 
 interface SearchResultProps {
@@ -26,6 +26,7 @@ export const SearchResult: React.FC<SearchResultProps> = ({
     t => t.tps.trim().toLowerCase() === String(result.tps || '').trim().toLowerCase() ||
          t.tps.replace(/\D/g, '') === String(result.tps || '').replace(/\D/g, '')
   );
+  const phase = getPhaseInfo(config.dataPhase);
 
   return (
     <section id="hasil-pencarian" className="py-8 bg-transparent animate-in fade-in slide-in-from-bottom-3 duration-200">
@@ -296,7 +297,7 @@ export const SearchResult: React.FC<SearchResultProps> = ({
                     <span className="text-xs font-bold text-[#1899D6]">Aja Kuwatir!</span>
                   </div>
                   <p className="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">
-                    Tahapan saat ini masih <strong>DPS (Daftar Pemilih Sementara)</strong>, sehingga masih terbuka masa sanggahan masyarakat. Silakan klik tombol di bawah untuk melapor kepada panitia!
+                    Tahapan data saat ini adalah <strong>{phase.fullName}</strong>{phase.code === 'DPS' ? ', sehingga masih terbuka masa tanggapan dan sanggahan masyarakat' : ''}. Silakan klik tombol di bawah untuk melapor kepada panitia!
                   </p>
                 </div>
               </div>
