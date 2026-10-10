@@ -406,14 +406,22 @@ export const ImportVoterModal: React.FC<ImportVoterModalProps> = ({
             ) {
               headerRowIdx = i;
               if (i + 1 < trimmedRawData.length) {
-                const nextRowStr = trimmedRawData[i + 1].map((c) => String(c ?? '').trim().toUpperCase()).join(' ');
-                if (
-                  nextRowStr.includes('TEMPAT') ||
-                  nextRowStr.includes('TANGGAL') ||
-                  nextRowStr.includes('DUSUN') ||
-                  nextRowStr.includes('RT')
-                ) {
-                  subHeaderRowIdx = i + 1;
+                const nextRow = trimmedRawData[i + 1];
+                // Cek apakah baris berikutnya adalah data pemilih (memiliki NIK 16 digit)
+                const hasNikInData = nextRow.some((c: any) => {
+                  const digits = String(c ?? '').replace(/\D/g, '');
+                  return digits.length === 16;
+                });
+
+                if (!hasNikInData) {
+                  // Hanya jika baris kedua berupa teks subheader murni (misal TEMPAT, TANGGAL, DUSUN) tanpa NIK
+                  const nextRowCells = nextRow.map((c: any) => String(c ?? '').trim().toUpperCase());
+                  const isSubHeader = nextRowCells.some((cell: string) =>
+                    ['TEMPAT', 'TANGGAL', 'DUSUN', 'TEMPAT LAHIR', 'TGL LAHIR', 'RT', 'RW'].includes(cell)
+                  );
+                  if (isSubHeader) {
+                    subHeaderRowIdx = i + 1;
+                  }
                 }
               }
               break;

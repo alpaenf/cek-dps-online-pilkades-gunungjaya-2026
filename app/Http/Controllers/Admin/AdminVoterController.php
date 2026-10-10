@@ -375,9 +375,21 @@ class AdminVoterController extends Controller
             // Deteksi jika ada baris sub-header kedua (baris TEMPAT, TANGGAL, DUSUN, dsb)
             $dataStartIndex = $headerRowIndex + 1;
             if (isset($rawRows[$headerRowIndex + 1])) {
-                $rowNext = array_filter(array_map('strtoupper', array_map('trim', array_map('strval', $rawRows[$headerRowIndex + 1]))));
-                if (in_array('TEMPAT', $rowNext) || in_array('DUSUN', $rowNext) || in_array('RT', $rowNext)) {
-                    $dataStartIndex = $headerRowIndex + 2;
+                $rowNext = $rawRows[$headerRowIndex + 1];
+                $hasNextRowNik = false;
+                foreach ($rowNext as $cell) {
+                    $digits = preg_replace('/\D/', '', (string) $cell);
+                    if (strlen($digits) === 16) {
+                        $hasNextRowNik = true;
+                        break;
+                    }
+                }
+
+                if (! $hasNextRowNik) {
+                    $rowNextClean = array_map('strtoupper', array_map('trim', array_map('strval', $rowNext)));
+                    if (in_array('TEMPAT', $rowNextClean) || in_array('TANGGAL', $rowNextClean) || in_array('DUSUN', $rowNextClean) || in_array('TEMPAT LAHIR', $rowNextClean)) {
+                        $dataStartIndex = $headerRowIndex + 2;
+                    }
                 }
             }
 
