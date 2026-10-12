@@ -12,7 +12,6 @@ import {
   Volume2,
   VolumeX,
   Music,
-  ChevronUp,
   Disc3
 } from 'lucide-react';
 import { DEFAULT_MASCOT_GLAWU } from '../data/logoPresets';
@@ -38,16 +37,14 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
   audioSrc = '/audio/jingle-pilkades-gunungjaya.mp3'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [hasInteracted, setHasInteracted] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [volume, setVolume] = useState(0.45);
   const [isMuted, setIsMuted] = useState(false);
-  const [showAudioHint, setShowAudioHint] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const mascotName = config.mascot_name || 'Si Glawu';
 
-  // Inisialisasi Audio & Autoplay Handlers
+  // Inisialisasi Audio: Default Sudah Play
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -59,42 +56,34 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
     const wasUserPaused = sessionStorage.getItem('glawu_music_paused') === 'true';
     if (wasUserPaused) {
       setIsPlaying(false);
+      audio.pause();
       return;
     }
 
-    // Mencoba memutar audio secara otomatis (Default Nyala)
+    // Default: langsung play
+    setIsPlaying(true);
     const playPromise = audio.play();
     if (playPromise !== undefined) {
-      playPromise
-        .then(() => {
-          setIsPlaying(true);
-          setShowAudioHint(false);
-        })
-        .catch(() => {
-          // Jika browser memblokir autoplay tanpa gesture interaksi,
-          // dengarkan klik/sentuhan pertama user di mana pun pada halaman
-          setIsPlaying(false);
-          setShowAudioHint(true);
+      playPromise.catch(() => {
+        // Jika diblokir oleh browser autoplay policy sebelum interaksi pengguna,
+        // putar secara otomatis pada gesture/interaksi pertama pengguna di layar secara silent (tanpa teks/notif)
+        const handleSilentGesture = () => {
+          if (sessionStorage.getItem('glawu_music_paused') !== 'true' && audioRef.current) {
+            audioRef.current.play().then(() => {
+              setIsPlaying(true);
+            }).catch(() => {});
+          }
+          window.removeEventListener('click', handleSilentGesture);
+          window.removeEventListener('touchstart', handleSilentGesture);
+          window.removeEventListener('scroll', handleSilentGesture);
+          window.removeEventListener('keydown', handleSilentGesture);
+        };
 
-          const handleFirstUserGesture = () => {
-            if (sessionStorage.getItem('glawu_music_paused') !== 'true' && audioRef.current) {
-              audioRef.current
-                .play()
-                .then(() => {
-                  setIsPlaying(true);
-                  setShowAudioHint(false);
-                })
-                .catch(() => {});
-            }
-            window.removeEventListener('click', handleFirstUserGesture);
-            window.removeEventListener('touchstart', handleFirstUserGesture);
-            window.removeEventListener('keydown', handleFirstUserGesture);
-          };
-
-          window.addEventListener('click', handleFirstUserGesture, { once: true });
-          window.addEventListener('touchstart', handleFirstUserGesture, { once: true });
-          window.addEventListener('keydown', handleFirstUserGesture, { once: true });
-        });
+        window.addEventListener('click', handleSilentGesture, { once: true });
+        window.addEventListener('touchstart', handleSilentGesture, { once: true });
+        window.addEventListener('scroll', handleSilentGesture, { once: true });
+        window.addEventListener('keydown', handleSilentGesture, { once: true });
+      });
     }
 
     // Tangani perpindahan tab (pause saat tab tidak aktif, lanjutkan jika aktif)
@@ -127,7 +116,7 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
     }
   }, [volume, isMuted]);
 
-  // Handler Play / Pause
+  // Handler Play / Pause (Klik Profil Maskot)
   const togglePlay = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     const audio = audioRef.current;
@@ -142,7 +131,6 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
         .play()
         .then(() => {
           setIsPlaying(true);
-          setShowAudioHint(false);
           sessionStorage.setItem('glawu_music_paused', 'false');
         })
         .catch((err) => {
@@ -167,8 +155,6 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
 
   const handleOpen = () => {
     setIsOpen(!isOpen);
-    setHasInteracted(true);
-    setShowAudioHint(false);
   };
 
   return (
@@ -427,28 +413,26 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
 
       {/* FLOATING TRIGGER PILL WITH GLOWING AVATAR & DIRECT PLAY/PAUSE */}
       <div className="relative">
-        {/* Balon Petunjuk Autoplay (Jika diblokir browser saat pertama masuk) */}
-        {showAudioHint && !isOpen && (
-          <div className="absolute -top-10 right-0 animate-in fade-in slide-in-from-bottom-2 duration-300 pointer-events-auto">
-            <button
-              type="button"
-              onClick={togglePlay}
-              className="bg-slate-900/90 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-lg border border-amber-400/50 flex items-center gap-1.5 cursor-pointer hover:bg-slate-900 transition whitespace-nowrap"
-            >
-              <Music className="w-3 h-3 text-amber-400 animate-bounce" />
-              <span>Sentuh untuk Putar Jingle Pilkades</span>
-            </button>
-          </div>
-        )}
-
         {/* The Main Floating Pill Container */}
-        <div className="relative flex items-center bg-white/95 backdrop-blur-xs text-slate-900 p-1.5 pr-2.5 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.14)] border-2 border-b-3 border-amber-400 hover:border-amber-500 transition-all duration-200 gap-2">
+        <div
+          onClick={handleOpen}
+          className="group relative flex items-center bg-white hover:bg-amber-50/70 text-slate-900 pl-1.5 pr-3 py-1.5 rounded-full shadow-[0_6px_20px_rgba(0,0,0,0.12)] border-2 border-b-3 border-amber-400 hover:border-amber-500 transition-all cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0 active:border-b gap-2"
+          role="button"
+          tabIndex={0}
+          aria-label={`Buka Panduan ${mascotName}`}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              handleOpen();
+            }
+          }}
+        >
           {/* AVATAR PROFILE BUTTON: BERPENDAR & KLIK TOGGLE PLAY/PAUSE */}
           <button
             type="button"
             onClick={togglePlay}
             className="group/avatar relative cursor-pointer focus:outline-none rounded-full p-0.5 shrink-0"
-            title={isPlaying ? 'Klik Profil untuk Jeda Musik' : 'Klik Profil untuk Putar Musik'}
+            title={isPlaying ? 'Jeda Musik (Klik Profil)' : 'Putar Musik (Klik Profil)'}
             aria-label={isPlaying ? 'Jeda Musik' : 'Putar Musik'}
           >
             {/* Efek Berpendar (Glowing Sound Waves) saat musik berputar */}
@@ -485,84 +469,32 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
               </div>
             </div>
 
-            {/* Badge Status Musik di Sudut Avatar */}
-            <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center">
-              {isPlaying ? (
-                <div className="flex items-end gap-[1.5px] h-3.5 px-1 py-0.5 bg-gradient-to-r from-amber-500 to-[#58CC02] rounded-full border border-white shadow-xs">
+            {/* Equalizer Wavelet Halus di Sudut Avatar */}
+            {isPlaying && (
+              <div className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center pointer-events-none">
+                <div className="flex items-end gap-[1.5px] h-3 px-1 py-0.5 bg-gradient-to-r from-amber-500 to-[#58CC02] rounded-full border border-white shadow-xs">
                   <span className="w-[2px] bg-white rounded-full animate-eq-1 h-full" />
                   <span className="w-[2px] bg-white rounded-full animate-eq-2 h-full" />
                   <span className="w-[2px] bg-white rounded-full animate-eq-3 h-full" />
                 </div>
-              ) : (
-                <div className="w-3.5 h-3.5 rounded-full bg-slate-600 text-white flex items-center justify-center border border-white shadow-xs">
-                  <Play className="w-2 h-2 fill-white ml-0.5" />
-                </div>
-              )}
-            </div>
-          </button>
-
-          {/* AREA TEKS PANDUAN PEMILIH (KLIK UNTUK BUKA POPOVER MENU) */}
-          <button
-            type="button"
-            onClick={handleOpen}
-            className="text-left focus:outline-none cursor-pointer flex-1 min-w-0 pr-1 group"
-            aria-label={`Buka Panduan ${mascotName}`}
-          >
-            <div className="flex items-center gap-1">
-              <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight group-hover:text-amber-700 transition-colors">
-                {mascotName}
-              </span>
-              {isPlaying ? (
-                <span className="text-[8px] bg-emerald-100 text-emerald-800 border border-emerald-300 font-black px-1.5 py-0.2 rounded-full leading-none flex items-center gap-0.5 shadow-2xs">
-                  <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                  Jingle ON
-                </span>
-              ) : (
-                <span className="text-[8px] bg-[#FFC800]/30 text-[#B45309] border border-[#FFC800] font-black px-1 py-0.2 rounded-full leading-none">
-                  Maskot
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-1 mt-0.5">
-              <span className="text-[9px] text-slate-500 block font-bold leading-none">
-                {isPlaying ? 'Panduan Pemilih 🎵' : 'Panduan Pemilih'}
-              </span>
-            </div>
-          </button>
-
-          {/* TOMBOL CEPAT AUDIO TOGGLE DI SISI KANAN */}
-          <button
-            type="button"
-            onClick={togglePlay}
-            className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all cursor-pointer shrink-0 ${
-              isPlaying
-                ? 'bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300 shadow-2xs'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-600 border-slate-300'
-            }`}
-            title={isPlaying ? 'Jeda Jingle' : 'Putar Jingle'}
-            aria-label={isPlaying ? 'Jeda Jingle' : 'Putar Jingle'}
-          >
-            {isPlaying ? (
-              <Pause className="w-3 h-3 fill-amber-800" />
-            ) : (
-              <Play className="w-3 h-3 fill-slate-700 ml-0.5" />
+              </div>
             )}
           </button>
 
-          {/* Icon Panah untuk Membuka Popover */}
-          <button
-            type="button"
-            onClick={handleOpen}
-            className="text-slate-400 hover:text-slate-700 cursor-pointer p-0.5 transition"
-            title="Buka Menu Panduan"
-            aria-label="Buka Menu Panduan"
-          >
-            <ChevronUp
-              className={`w-3.5 h-3.5 transition-transform duration-200 ${
-                isOpen ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
+          {/* AREA TEKS PANDUAN PEMILIH (SESUAI DESAIN ASLI) */}
+          <div className="text-left select-none pointer-events-none">
+            <div className="flex items-center gap-1">
+              <span className="text-[11px] font-black text-slate-900 uppercase">
+                {mascotName}
+              </span>
+              <span className="text-[8px] bg-[#FFC800]/30 text-[#B45309] border border-[#FFC800] font-black px-1 py-0.2 rounded-full leading-none">
+                Maskot
+              </span>
+            </div>
+            <span className="text-[9px] text-slate-500 block font-bold leading-none mt-0.5">
+              Panduan Pemilih
+            </span>
+          </div>
         </div>
       </div>
     </div>
