@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { DEFAULT_MASCOT_GLAWU } from '../data/logoPresets';
 import { PilkadesConfig } from '../types/pilkades';
+import defaultJingleAudio from '../assets/audio/jingle-pilkades-gunungjaya.mp3';
 
 interface FloatingGlawuAssistantProps {
   config: PilkadesConfig;
@@ -34,17 +35,18 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
   onScrollToContact,
   onScrollToMascot,
   mascotSrc,
-  audioSrc = '/audio/jingle-pilkades-gunungjaya.mp3'
+  audioSrc
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [volume, setVolume] = useState(0.45);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [volume, setVolume] = useState(0.7);
   const [isMuted, setIsMuted] = useState(false);
 
+  const resolvedAudioSrc = audioSrc || defaultJingleAudio || '/audio/jingle-pilkades-gunungjaya.mp3';
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const mascotName = config.mascot_name || 'Si Glawu';
 
-  // Inisialisasi Audio: Default Sudah Play
+  // Inisialisasi Audio: Default Nyala Otomatis
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -52,51 +54,56 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
     audio.volume = isMuted ? 0 : volume;
     audio.loop = true;
 
-    // Cek apakah user sebelumnya sengaja mem-pause musik di sesi ini
-    const wasUserPaused = sessionStorage.getItem('glawu_music_paused') === 'true';
-    if (wasUserPaused) {
-      setIsPlaying(false);
-      audio.pause();
-      return;
+    // Upayakan putar audio segera (Autoplay)
+    const playAttempt = audio.play();
+    if (playAttempt !== undefined) {
+      playAttempt
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch(() => {
+          // Jika browser menahan audio sebelum ada interaksi fisik pengguna (Autoplay Policy),
+          // pasang listener pada fase capture di document agar sentuhan/klik PERTAMA di mana saja langsung memutar musik
+          const handleFirstInteraction = () => {
+            const currentAudio = audioRef.current;
+            if (currentAudio && currentAudio.paused) {
+              currentAudio
+                .play()
+                .then(() => {
+                  setIsPlaying(true);
+                })
+                .catch((err) => {
+                  console.warn('Playback error on gesture:', err);
+                });
+            }
+            cleanupListeners();
+          };
+
+          const cleanupListeners = () => {
+            document.removeEventListener('pointerdown', handleFirstInteraction, true);
+            document.removeEventListener('touchstart', handleFirstInteraction, true);
+            document.removeEventListener('click', handleFirstInteraction, true);
+            document.removeEventListener('keydown', handleFirstInteraction, true);
+          };
+
+          document.addEventListener('pointerdown', handleFirstInteraction, true);
+          document.addEventListener('touchstart', handleFirstInteraction, true);
+          document.addEventListener('click', handleFirstInteraction, true);
+          document.addEventListener('keydown', handleFirstInteraction, true);
+        });
     }
 
-    // Default: langsung play
-    setIsPlaying(true);
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise.catch(() => {
-        // Jika diblokir oleh browser autoplay policy sebelum interaksi pengguna,
-        // putar secara otomatis pada gesture/interaksi pertama pengguna di layar secara silent (tanpa teks/notif)
-        const handleSilentGesture = () => {
-          if (sessionStorage.getItem('glawu_music_paused') !== 'true' && audioRef.current) {
-            audioRef.current.play().then(() => {
-              setIsPlaying(true);
-            }).catch(() => {});
-          }
-          window.removeEventListener('click', handleSilentGesture);
-          window.removeEventListener('touchstart', handleSilentGesture);
-          window.removeEventListener('scroll', handleSilentGesture);
-          window.removeEventListener('keydown', handleSilentGesture);
-        };
-
-        window.addEventListener('click', handleSilentGesture, { once: true });
-        window.addEventListener('touchstart', handleSilentGesture, { once: true });
-        window.addEventListener('scroll', handleSilentGesture, { once: true });
-        window.addEventListener('keydown', handleSilentGesture, { once: true });
-      });
-    }
-
-    // Tangani perpindahan tab (pause saat tab tidak aktif, lanjutkan jika aktif)
+    // Tangani perpindahan tab (pause saat tab tidak aktif, lanjutkan saat aktif)
     const handleVisibilityChange = () => {
       const currentAudio = audioRef.current;
       if (!currentAudio) return;
 
       if (document.hidden) {
-        if (isPlaying) {
+        if (!currentAudio.paused) {
           currentAudio.pause();
         }
       } else {
-        if (isPlaying && sessionStorage.getItem('glawu_music_paused') !== 'true') {
+        if (isPlaying) {
           currentAudio.play().catch(() => {});
         }
       }
@@ -108,7 +115,7 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
     };
   }, []);
 
-  // Update volume & mute pada elemen audio
+  // Sinkronisasi volume & mute
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = isMuted ? 0 : volume;
@@ -122,16 +129,14 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (isPlaying) {
+    if (!audio.paused) {
       audio.pause();
       setIsPlaying(false);
-      sessionStorage.setItem('glawu_music_paused', 'true');
     } else {
       audio
         .play()
         .then(() => {
           setIsPlaying(true);
-          sessionStorage.setItem('glawu_music_paused', 'false');
         })
         .catch((err) => {
           console.warn('Gagal memutar audio:', err);
@@ -162,10 +167,16 @@ export const FloatingGlawuAssistant: React.FC<FloatingGlawuAssistantProps> = ({
       {/* Audio Element Tersembunyi */}
       <audio
         ref={audioRef}
-        src={audioSrc}
+        src={resolvedAudioSrc}
         preload="auto"
         loop
-      />
+        playsInline
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+      >
+        <source src={resolvedAudioSrc} type="audio/mpeg" />
+        <source src="/audio/jingle-pilkades-gunungjaya.mp3" type="audio/mpeg" />
+      </audio>
 
       {/* Popover Bubble Card (Menu Panduan & Kontrol Musik Premium) */}
       {isOpen && (
